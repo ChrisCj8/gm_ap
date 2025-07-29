@@ -2,8 +2,6 @@
   Custom Hooking System that allows hooks to be registered that only run when a specific item is received, location is checked, etc.
 */
 
-
-
 GMAP.Trackers = GMAP.Trackers or {}
 GMAP.TrackerMethods = GMAP.TrackerMethods or {}
 
