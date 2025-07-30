@@ -63,7 +63,7 @@ local SocketBase = {
         print(ownerID.." socket disconnected")
         GMAP.SendChatMessage("Slot "..ownerID.." was disconnected",color_white,true)
       end
-      hook.Run("APDisconnection",ownerID)
+      hook.Run("AP_Disconnection",ownerID)
     end,
   }
 }
