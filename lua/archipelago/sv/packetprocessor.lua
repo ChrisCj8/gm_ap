@@ -130,7 +130,7 @@ function PR.Connected( packet , slot )
 
     slot.Items = {} or slot.Items
 
-    hook.Run("APConnection",slot.ID)
+    hook.Run("AP_Connect",slot.ID)
     print("running ".."AP_"..slot.ID.."_LocationListUpdate")
     hook.Run("AP_"..slot.ID.."_LocationListUpdate")
     print("running ".."AP_"..slot.ID.."_ItemListUpdate")
