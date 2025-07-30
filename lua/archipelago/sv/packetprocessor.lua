@@ -287,21 +287,27 @@ end
 
 function PR.Bounced( packet , slot )
     print("Received Bounce Package for "..slot.ID)
-    local newtags = {}
-    for k,v in ipairs(packet.tags) do 
-        newtags[v] = true
+    if istable(packet.tags) then
+        local newtags = {}
+        for k,v in ipairs(packet.tags) do 
+            newtags[v] = true
+        end
+        packet.tags = newtags
     end
-    packet.tags = newtags
-    local newgames = {}
-    for k,v in ipairs(packet.games) do 
-        newgames[v] = true
+    if istable(packet.games) then
+        local newgames = {}
+        for k,v in ipairs(packet.games) do 
+            newgames[v] = true
+        end
+        packet.games = newgames
     end
-    packet.games = newgames
-    local newslots = {}
-    for k,v in ipairs(packet.slots) do 
-        newslots[v] = true
+    if istable(packet.slots) then
+        local newslots = {}
+        for k,v in ipairs(packet.slots) do 
+            newslots[v] = true
+        end
+        packet.slots = newslots
     end
-    packet.slots = newslots
     local hkrtrn = hook.Run("AP_Bounced",slot,packet)
     if hkrtrn != nil then
         hkrtrn = hook.Run("AP_Bounced_"..slot.ID,packet)
