@@ -238,3 +238,4 @@ end)
 ]]
 
 include("archipelago/sv/tracking.lua")
+include("archipelago/sv/deathlink.lua")

@@ -302,6 +302,10 @@ function PR.Bounced( packet , slot )
         newslots[v] = true
     end
     packet.slots = newslots
+    local hkrtrn = hook.Run("AP_Bounced",slot,packet)
+    if hkrtrn != nil then
+        hkrtrn = hook.Run("AP_Bounced_"..slot.ID,packet)
+    end
     PrintTable(packet)
 end 
 
