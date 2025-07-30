@@ -4,6 +4,8 @@ end
 
 --require("gwsockets") 
 
+AddCSLuaFile("archipelago/cl/slot_config.lua")
+
 util.AddNetworkString("APmessage")
 util.AddNetworkString("APConfiguratorInfoSender")
 util.AddNetworkString("APConfiguratorCommand")
@@ -75,7 +77,7 @@ local function GenerateConfigData()
   local ConfigData = {}
   for k,v in pairs(GMAP.Registered) do
     ConfigData[k] = {}
-    local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address"}
+    local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
     for ik,iv in ipairs(CopyFields) do
       ConfigData[k][iv] = v[iv]
     end
@@ -125,26 +127,34 @@ net.Receive("APConfiguratorInfoSender", function(len,ply)
       ConfigInfo.ID = ConfigInfo.slotName
     end
 
-    if GMAP.Registered[ConfigInfo.ID] != nil then
+    local slottbl = GMAP.Registered[ConfigInfo.ID]
+
+    if slottbl != nil then
       if GMAP.Connected[ConfigInfo.ID] != nil then
-        if ConfigInfo.receiveAPchat != GMAP.Registered[ConfigInfo.ID].receiveAPchat then
+        if ConfigInfo.receiveAPchat != slottbl.receiveAPchat or ConfigInfo.deathlink != slottbl.deathlink then
           local tags = {}
+          if slottbl.cantSendLocations == true then
+              tags[#tags+1] = "TextOnly"
+          end
           if ConfigInfo.receiveAPchat == false then
-            tags[#tags+1] = "NoText"
+              tags[#tags+1] = "NoText"
+          end
+          if ConfigInfo.deathlink == true then
+              tags[#tags+1] = "DeathLink"
           end
           GMAP.Connected[ConfigInfo.ID].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
         end
         if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[ConfigInfo.ID] == nil then
-          GMAP.ChatReaders[ConfigInfo.ID] = GMAP.Registered[ConfigInfo.ID]
+          GMAP.ChatReaders[ConfigInfo.ID] = slottbl
         elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[ConfigInfo.ID] != nil then
           GMAP.ChatReaders[ConfigInfo.ID] = nil
         end
-        if ConfigInfo.address != GMAP.Registered[ConfigInfo.ID].address then
+        if ConfigInfo.address != slottbl.address then
           ConfigInfo.address = nil
           GMAP.SendNotify("Can't change address while slot is connected, address change discarded ",1,3,ply)
         end
       end
-      table.Merge(GMAP.Registered[ConfigInfo.ID],ConfigInfo)
+      table.Merge(slottbl,ConfigInfo)
       print("updated slot "..ConfigInfo.ID)
     else
       GMAP.NewSlot(ConfigInfo)

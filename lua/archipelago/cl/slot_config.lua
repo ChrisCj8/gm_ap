@@ -146,6 +146,11 @@ function BuildSlotConfigMenu(panel)
     ForwardGMODchatCheck:SetDark(true)
     ForwardGMODchatCheck:SetIndent(40)
 
+    local DeathlinkCheck = vgui.Create("DCheckBoxLabel", panel)
+    DeathlinkCheck:SetText("#menu.ap_slot_config.deathlink_check")
+    DeathlinkCheck:SetTextColor(color_black)
+    DeathlinkCheck:SetIndent(30)
+
     local UpdateButton = vgui.Create("DButton",panel)
     function UpdateButton:DoClick()
       if SlotNameInput.Input:GetText() != "" and SlotNameInput.Input:GetText() != "" then
@@ -159,6 +164,7 @@ function BuildSlotConfigMenu(panel)
           forwardGMODchat = ForwardGMODchatCheck:GetChecked(),
           receiveAPchat = ReceiveAPchatCheck:GetChecked(),
           textOnly = TextOnlyCheck:GetChecked(),
+          deathlink = DeathlinkCheck:GetChecked(),
         })
         repeat
           net.Start("APConfiguratorInfoSender")
@@ -188,6 +194,7 @@ function BuildSlotConfigMenu(panel)
     panel:AddItem(ReceiveAPchatCheck)
     panel:AddItem(ForwardAPchatCheck)
     panel:AddItem(ForwardGMODchatCheck)
+    panel:AddItem(DeathlinkCheck)
     panel:AddItem(UpdateButton)
 
     function SlotsPanel:OnRowSelected( rowIndex, rowPanel )
@@ -200,6 +207,7 @@ function BuildSlotConfigMenu(panel)
       ReceiveAPchatCheck:SetValue(ConfigInfo[rowPanel:GetValue(1)].receiveAPchat)
       ForwardGMODchatCheck:SetValue(ConfigInfo[rowPanel:GetValue(1)].forwardGMODchat)
       TextOnlyCheck:SetValue(ConfigInfo[rowPanel:GetValue(1)].textOnly)
+      DeathlinkCheck:SetValue(ConfigInfo[rowPanel:GetValue(1)].deathlink)
     end
 
     function SlotsPanel:Refresh()

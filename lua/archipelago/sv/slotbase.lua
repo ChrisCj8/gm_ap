@@ -271,6 +271,7 @@ function GMAP.NewSlot( inputTable )
     newSlot.receiveAPchat = inputTable.receiveAPchat or false
     newSlot.forwardAPchat = inputTable.forwardAPchat or false
     newSlot.forwardGMODchat = inputTable.forwardGMODchat or false
+    newSlot.deathlink = inputTable.deathlink or false
 
     newSlot.tags = {}
     newSlot.Items = {}

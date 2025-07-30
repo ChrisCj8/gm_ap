@@ -45,6 +45,9 @@ function PR.RoomInfo( packet , slot )
         tags[#tags+1] = "TextOnly"
         slot.cantSendLocations = true
     end
+    if slot.deathlink == true then
+        tags[#tags+1] = "DeathLink"
+    end
 
     local requestedDPs = {}
 
