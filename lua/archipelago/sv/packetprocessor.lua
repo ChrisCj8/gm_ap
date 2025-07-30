@@ -287,6 +287,21 @@ end
 
 function PR.Bounced( packet , slot )
     print("Received Bounce Package for "..slot.ID)
+    local newtags = {}
+    for k,v in ipairs(packet.tags) do 
+        newtags[v] = true
+    end
+    packet.tags = newtags
+    local newgames = {}
+    for k,v in ipairs(packet.games) do 
+        newgames[v] = true
+    end
+    packet.games = newgames
+    local newslots = {}
+    for k,v in ipairs(packet.slots) do 
+        newslots[v] = true
+    end
+    packet.slots = newslots
     PrintTable(packet)
 end 
 
