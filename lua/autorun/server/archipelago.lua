@@ -1,5 +1,5 @@
 if !util.IsBinaryModuleInstalled("gwsockets") then
-  error("Couldn't find GWSockets")
+    error("Couldn't find GWSockets")
 end
 
 --require("gwsockets") 
@@ -16,26 +16,26 @@ GMAP.Connected = GMAP.Connected or {}
 GMAP.Rooms = GMAP.Rooms or {}
 
 if !file.IsDir("/archipelago/","DATA") then
-  file.CreateDir("archipelago")
+    file.CreateDir("archipelago")
 end
 
 include("archipelago/sv/dpmanagement.lua")
 
 GMAP.ItemTypeColors = {
-  [0] = GMAP.Colors.apcyan, -- normal
-  [1] = GMAP.Colors.applum, -- progression
-  [2] = GMAP.Colors.apslateblue, -- useful
-  [3] = GMAP.Colors.applum, -- proguseful
-  [4] = GMAP.Colors.apsalmon, -- trap
-  [5] = GMAP.Colors.applum, -- progtrap
-  [6] = GMAP.Colors.apslateblue, -- usefultrap
-  [7] = GMAP.Colors.applum, -- progusefultrap
+    [0] = GMAP.Colors.apcyan, -- normal
+    [1] = GMAP.Colors.applum, -- progression
+    [2] = GMAP.Colors.apslateblue, -- useful
+    [3] = GMAP.Colors.applum, -- proguseful
+    [4] = GMAP.Colors.apsalmon, -- trap
+    [5] = GMAP.Colors.applum, -- progtrap
+    [6] = GMAP.Colors.apslateblue, -- usefultrap
+    [7] = GMAP.Colors.applum, -- progusefultrap
 }
 
 setmetatable(GMAP.ItemTypeColors, {
-  __index = function(self, key)
-    return GMAP.Colors.apcyan
-  end
+    __index = function(self, key)
+        return GMAP.Colors.apcyan
+    end
 })
 
 include("archipelago/sv/slotbase.lua")
@@ -43,165 +43,167 @@ include("archipelago/sv/slotbase.lua")
 GMAP.ChatReaders = GMAP.ChatReaders or {}
 
 hook.Add("PlayerSay","APChatReader", function( ply, text )
-  for k,v in pairs(GMAP.ChatReaders) do
-    if GMAP.Registered[v.ID].Socket:isConnected() then
-      GMAP.Registered[v.ID]:sendChatMessage("["..ply:Name().."] "..text)
+    for k,v in pairs(GMAP.ChatReaders) do
+        if GMAP.Registered[v.ID].Socket:isConnected() then
+            GMAP.Registered[v.ID]:sendChatMessage("["..ply:Name().."] "..text)
+        end
     end
-  end
-end )
+end)
 
 function GMAP.SendChatMessage(txt,clr,last)
-  txt = txt or "empty"
-  --clr = clr or color_white
-  net.Start("APmessage")
-    net.WriteColor(clr,false)
-    net.WriteString(txt)
-    net.WriteBool(last)
-    --print((net.BytesWritten()).." bytes")
-  net.Broadcast()
+    txt = txt or "empty"
+    --clr = clr or color_white
+    net.Start("APmessage")
+        net.WriteColor(clr,false)
+        net.WriteString(txt)
+        net.WriteBool(last)
+        --print((net.BytesWritten()).." bytes")
+    net.Broadcast()
 end
 
 function GMAP.SendNotify(txt,type,time,ply)
-  net.Start("APnotify")
-    net.WriteString(txt)
-    net.WriteUInt(type,3)
-    net.WriteDouble(time)
-  if ply != nil then
-    net.Send(ply)
-  else
-    net.Broadcast()
-  end
+    net.Start("APnotify")
+        net.WriteString(txt)
+        net.WriteUInt(type,3)
+        net.WriteDouble(time)
+    if ply != nil then
+        net.Send(ply)
+    else
+        net.Broadcast()
+    end
 end
 
 local function GenerateConfigData()
-  local ConfigData = {}
-  for k,v in pairs(GMAP.Registered) do
-    ConfigData[k] = {}
-    local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
-    for ik,iv in ipairs(CopyFields) do
-      ConfigData[k][iv] = v[iv]
+    local ConfigData = {}
+    for k,v in pairs(GMAP.Registered) do
+        ConfigData[k] = {}
+        local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
+        for ik,iv in ipairs(CopyFields) do
+            ConfigData[k][iv] = v[iv]
+        end
+        if v.Socket != nil and v.Socket:isConnected() then
+            ConfigData[k].connected = true
+        end
     end
-    if v.Socket != nil and v.Socket:isConnected() then
-      ConfigData[k].connected = true
-    end
-  end
-  return ConfigData
+    return ConfigData
 end
 
 local reconnectonloadCVAR = CreateConVar("sv_gmap_reconnect_on_persist_load",1,FCVAR_ARCHIVE,"Automatically reconnect all slots that were connected the last time the persistence data was saved.",0,1)
 
 local function ApplyConfigData(data)
-  for k,v in pairs(data) do
-    GMAP.NewSlot(v)
-    if v.connected and reconnectonloadCVAR:GetBool() then -- may be a good idea to move this somewhere else later
-      GMAP.Registered[k]:Connect()
+    for k,v in pairs(data) do
+        GMAP.NewSlot(v)
+        if v.connected and reconnectonloadCVAR:GetBool() then -- may be a good idea to move this somewhere else later
+            GMAP.Registered[k]:Connect()
+        end
     end
-  end
 end
 
 local function ConfigSender(ply)
-  local ConfigString = util.TableToJSON(GenerateConfigData())
-  repeat
-    net.Start("APConfiguratorInfoSender")
-      net.WriteString(string.sub(ConfigString,0,64000))
-      ConfigString = (string.sub(ConfigString,64001))
-      net.WriteBool(#ConfigString == 0)
-      --print((net.BytesWritten()).." bytes")
-    net.Send( ply )
-  until #ConfigString == 0
+    local ConfigString = util.TableToJSON(GenerateConfigData())
+    repeat
+        net.Start("APConfiguratorInfoSender")
+            net.WriteString(string.sub(ConfigString,0,64000))
+            ConfigString = (string.sub(ConfigString,64001))
+            net.WriteBool(#ConfigString == 0)
+            --print((net.BytesWritten()).." bytes")
+        net.Send( ply )
+    until #ConfigString == 0
 end
 
 local ConfigSenderTable = ConfigSenderTable or {}
 local ConfigInfo = ConfigInfo or {}
 
 net.Receive("APConfiguratorInfoSender", function(len,ply)
-  table.Add(ConfigSenderTable,{net.ReadString()})
-  --PrintTable(ConfigSenderTable)
-  if net.ReadBool() then
-    ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
-    --print("printing received ConfigInfo")
-    --PrintTable(ConfigInfo)
-    --local ID = ConfigInfo.ID
-    --ConfigInfo.ID = nil
-    if ConfigInfo.ID == "" then
-      ConfigInfo.ID = ConfigInfo.slotName
-    end
+    table.Add(ConfigSenderTable,{net.ReadString()})
+    --PrintTable(ConfigSenderTable)
+    if net.ReadBool() then
+        ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
+        --print("printing received ConfigInfo")
+        --PrintTable(ConfigInfo)
+        --local ID = ConfigInfo.ID
+        --ConfigInfo.ID = nil
+        if ConfigInfo.ID == "" then
+            ConfigInfo.ID = ConfigInfo.slotName
+        end
 
-    local slottbl = GMAP.Registered[ConfigInfo.ID]
+        local slottbl = GMAP.Registered[ConfigInfo.ID]
 
-    if slottbl != nil then
-      if GMAP.Connected[ConfigInfo.ID] != nil then
-        if ConfigInfo.receiveAPchat != slottbl.receiveAPchat or ConfigInfo.deathlink != slottbl.deathlink then
-          local tags = {}
-          if slottbl.cantSendLocations == true then
-              tags[#tags+1] = "TextOnly"
-          end
-          if ConfigInfo.receiveAPchat == false then
-              tags[#tags+1] = "NoText"
-          end
-          if ConfigInfo.deathlink == true then
-              tags[#tags+1] = "DeathLink"
-          end
-          GMAP.Connected[ConfigInfo.ID].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
+        if slottbl != nil then
+            if GMAP.Connected[ConfigInfo.ID] != nil then
+                if ConfigInfo.receiveAPchat != slottbl.receiveAPchat or ConfigInfo.deathlink != slottbl.deathlink then
+                    local tags = {}
+                    if slottbl.cantSendLocations == true then
+                        tags[#tags+1] = "TextOnly"
+                    end
+                    if ConfigInfo.receiveAPchat == false then
+                        tags[#tags+1] = "NoText"
+                    end
+                    if ConfigInfo.deathlink == true then
+                        tags[#tags+1] = "DeathLink"
+                    end
+                    GMAP.Connected[ConfigInfo.ID].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
+                end
+                if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[ConfigInfo.ID] == nil then
+                    GMAP.ChatReaders[ConfigInfo.ID] = slottbl
+                elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[ConfigInfo.ID] != nil then
+                    GMAP.ChatReaders[ConfigInfo.ID] = nil
+                end
+                if ConfigInfo.address != slottbl.address then
+                    ConfigInfo.address = nil
+                    GMAP.SendNotify("Can't change address while slot is connected, address change discarded ",1,3,ply)
+                end
+            end
+            table.Merge(slottbl,ConfigInfo)
+            print("updated slot "..ConfigInfo.ID)
+        else
+            GMAP.NewSlot(ConfigInfo)
+            print("created new slot "..ConfigInfo.ID)
         end
-        if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[ConfigInfo.ID] == nil then
-          GMAP.ChatReaders[ConfigInfo.ID] = slottbl
-        elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[ConfigInfo.ID] != nil then
-          GMAP.ChatReaders[ConfigInfo.ID] = nil
-        end
-        if ConfigInfo.address != slottbl.address then
-          ConfigInfo.address = nil
-          GMAP.SendNotify("Can't change address while slot is connected, address change discarded ",1,3,ply)
-        end
-      end
-      table.Merge(slottbl,ConfigInfo)
-      print("updated slot "..ConfigInfo.ID)
-    else
-      GMAP.NewSlot(ConfigInfo)
-      print("created new slot "..ConfigInfo.ID)
+        ConfigSenderTable = {}
+        ConfigSender(ply)
     end
-    ConfigSenderTable = {}
-    ConfigSender(ply)
-  end
 end)
 
 net.Receive("APConfiguratorCommand", function(len, ply)
-  local cmd = net.ReadString()
-  if cmd == "Refresh" then
-    ConfigSender(ply)
-  elseif cmd == "Connect" then
-    local slot = net.ReadString()
-    GMAP.Registered[slot]:Connect()
-  elseif cmd == "Disconnect" then
-    local slot = net.ReadString()
-    GMAP.Registered[slot]:Disconnect()
-  elseif cmd == "Delete" then
-    local slot = net.ReadString()
-    if GMAP.Connected[slot] == nil then
-      GMAP.Registered[slot] = nil
-    else
-      GMAP.SendNotify("Can't delete currently connected slot "..slot,1,3,ply)
-      print(ply:Name().." tried to delete currently connected slot "..slot)
+    local cmd = net.ReadString()
+    if cmd == "Refresh" then
+        ConfigSender(ply)
+    elseif cmd == "Connect" then
+        local slot = net.ReadString()
+        GMAP.Registered[slot]:Connect()
+    elseif cmd == "Disconnect" then
+        local slot = net.ReadString()
+        GMAP.Registered[slot]:Disconnect()
+    elseif cmd == "Delete" then
+        local slot = net.ReadString()
+        if GMAP.Connected[slot] == nil then
+            GMAP.Registered[slot] = nil
+        else
+            GMAP.SendNotify("Can't delete currently connected slot "..slot,1,3,ply)
+            print(ply:Name().." tried to delete currently connected slot "..slot)
+        end
+        ConfigSender(ply)
     end
-    ConfigSender(ply)
-  end
 end)
 
 function GMAP.DisconnectAll()
-  for k,v in pairs(GMAP.Connected) do
-    v:Disconnect()
-  end
+    for k,v in pairs(GMAP.Connected) do
+        v:Disconnect()
+    end
 end
 
 hook.Add("Initialize","apConfigLoad", function()
-  if file.Exists("archipelago/slotconfig.json","DATA") then
-    ApplyConfigData(util.JSONToTable(file.Read("archipelago/slotconfig.json")))
-  end
+    if file.Exists("archipelago/slotconfig.json","DATA") then
+        ApplyConfigData(util.JSONToTable(file.Read("archipelago/slotconfig.json")))
+    end
 end)
 
 hook.Add("ShutDown","apConfigSave", function()
-  file.Write("archipelago/slotconfig.json",util.TableToJSON(GenerateConfigData()))
+    file.Write("archipelago/slotconfig.json",util.TableToJSON(GenerateConfigData()))
 end)
+
+-- old attempt to detect when the game is paused, no longer necessary since it now automatically reconnects whenever the connection is interrupted
 
 --[[
 GMAP.LastThink = GMAP.LastThink or -1
@@ -209,15 +211,15 @@ GMAP.ThinkGap = 0
 GMAP.LastPause = -1
 
 hook.Add("Think","GMAP Pause Detector", function()
-  local curthink = os.time()
-  if GMAP.LastThink > 0 then
-    GMAP.ThinkGap = curthink - GMAP.LastThink
-    if GMAP.ThinkGap > 2 then
-      print("game was paused for "..GMAP.ThinkGap.." seconds")
-      GMAP.LastPause = CurTime()
+    local curthink = os.time()
+    if GMAP.LastThink > 0 then
+        GMAP.ThinkGap = curthink - GMAP.LastThink
+        if GMAP.ThinkGap > 2 then
+            print("game was paused for "..GMAP.ThinkGap.." seconds")
+            GMAP.LastPause = CurTime()
+        end
     end
-  end
-  GMAP.LastThink = curthink
+    GMAP.LastThink = curthink
 end)
 
 util.AddNetworkString("GMAP_PauseInfo")
@@ -226,14 +228,14 @@ GMAP.PauseStart = 0
 GMAP.PauseLength = 0
 
 net.Receive("GMAP_PauseInfo", function(len,ply)
-  if net.ReadBool() then
-    print("game was paused")
-    GMAP.PauseStart = os.time()
-  else
-    GMAP.LastPause = CurTime()
-    GMAP.PauseLength = os.time() - GMAP.PauseStart
-    print("game was unpaused after "..GMAP.PauseLength.." seconds")
-  end
+    if net.ReadBool() then
+        print("game was paused")
+        GMAP.PauseStart = os.time()
+    else
+        GMAP.LastPause = CurTime()
+        GMAP.PauseLength = os.time() - GMAP.PauseStart
+        print("game was unpaused after "..GMAP.PauseLength.." seconds")
+    end
 end)
 ]]
 

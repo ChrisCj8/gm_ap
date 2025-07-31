@@ -394,8 +394,8 @@ end
 setmetatable(PR, {
   __index = function( self , key )
     return function(packet, slot)
-      ErrorNoHalt("Received Unhandled Package Type "..packet.cmd.." for "..slot.ID.."\n" )
-      PrintTable(packet)
+        ErrorNoHalt("Received Unhandled Package Type "..packet.cmd.." for "..slot.ID.."\n" )
+        PrintTable(packet)
     end
   end
 })

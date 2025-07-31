@@ -16,22 +16,22 @@ local DPCleanupCVAR = CreateConVar("sv_gmap_datapackage_cleanup",72,FCVAR_ARCHIV
 
 function GMAP.DPCleanup()
     if DPCleanupCVAR:GetInt() != -1 then
-      for k,v in pairs(GMAP.DataPackageRegister) do
-        for ik, iv in pairs(v) do
-          local lastuse = os.time()-iv
-          --print(k.."/"..ik..".json was last used "..tostring(math.Round(lastuse/3600,3)).." hours ago")
-          if lastuse > DPCleanupCVAR:GetFloat()*3600 then
-            file.Delete("archipelago/datapackages/"..k.."/"..ik..".json")
-            v[ik] = nil
-          end
-          if #file.Find("archipelago/datapackages/"..k.."/*","DATA") == 0 then
-            file.Delete("archipelago/datapackages/"..k.."/")
-          end
+        for k,v in pairs(GMAP.DataPackageRegister) do
+            for ik, iv in pairs(v) do
+                local lastuse = os.time()-iv
+                --print(k.."/"..ik..".json was last used "..tostring(math.Round(lastuse/3600,3)).." hours ago")
+                if lastuse > DPCleanupCVAR:GetFloat()*3600 then
+                    file.Delete("archipelago/datapackages/"..k.."/"..ik..".json")
+                    v[ik] = nil
+                end
+                if #file.Find("archipelago/datapackages/"..k.."/*","DATA") == 0 then
+                    file.Delete("archipelago/datapackages/"..k.."/")
+                end
+            end
+            if table.IsEmpty(v) then
+                GMAP.DataPackageRegister[k] = nil
+            end
         end
-        if table.IsEmpty(v) then
-          GMAP.DataPackageRegister[k] = nil
-        end
-      end
     end
     file.Write("archipelago/datapackages/register.json",util.TableToJSON(GMAP.DataPackageRegister))
 end
