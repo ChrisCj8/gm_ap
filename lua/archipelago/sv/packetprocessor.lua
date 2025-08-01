@@ -54,20 +54,25 @@ function PR.RoomInfo( packet , slot )
     local datapack = slot.Room.DataPackage
 
     if table.IsEmpty(datapack.games) then
-      for k,v in pairs(packet.datapackage_checksums) do
-        if file.Exists("archipelago/datapackages/"..k.."/"..v..".json","DATA") then
-            print("loading cached datapackage for "..k)
-            datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
+        for k,v in pairs(packet.datapackage_checksums) do
             local gamedp = datapack.games[k]
-            gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
-            gamedp.item_id_to_name = table.Flip(gamedp.item_name_to_id)
+            if !gamedp or gamedp.checksum != k then
+                if file.Exists("archipelago/datapackages/"..k.."/"..v..".json","DATA") then
+                    print("loading cached datapackage for "..k)
+                    datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
+                    
+                    gamedp = datapack.games[k]
 
-            GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
-            GMAP.DataPackageRegister[k][v] = os.time()
-        else
-            requestedDPs[#requestedDPs+1] = k
+                    gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
+                    gamedp.item_id_to_name = table.Flip(gamedp.item_name_to_id)
+
+                    GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
+                    GMAP.DataPackageRegister[k][v] = os.time()
+                else
+                    requestedDPs[#requestedDPs+1] = k
+                end
+            end
         end
-      end
     end
 
     local DPString = ""

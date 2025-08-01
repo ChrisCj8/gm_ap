@@ -34,17 +34,22 @@ local SocketBase = {
         onDisconnected = function(self)
             local ownerID = self.Owner
             local owner = GMAP.Registered[ownerID]
+
             GMAP.Connected[ownerID] = nil
             GMAP.ChatReaders[ownerID] = nil
+
+            local reconnect = false
+            local wasconnected = true
 
             if self.VoluntaryDC == nil then
                 print(ownerID.." socket couldn't connect")
                 GMAP.SendChatMessage("Slot "..ownerID.." couldn't connect",color_white,true)
+                wasconnected = false
             elseif self.VoluntaryDC == false then
                 local maxreconnects = reconnectCVAR:GetInt()
                 if self.ReconnectAttempts < maxreconnects then
                     self.ReconnectAttempts = self.ReconnectAttempts + 1
-                    owner:Connect()
+                    reconnect = true
                     print(ownerID.." socket lost connection")
                     GMAP.SendChatMessage("Slot "..ownerID.." lost connection, attempting reconnect "..self.ReconnectAttempts,color_white,true)
                 else
@@ -53,17 +58,26 @@ local SocketBase = {
                     else
                         GMAP.SendChatMessage("Slot "..ownerID.." lost connection, reconnect failed" ,color_white,true)
                     end
-                    GMAP.Rooms[owner.address].Members[ownerID] = nil
-                    if table.IsEmpty(GMAP.Rooms[owner.address].Members) then
-                        GMAP.Rooms[owner.address] = nil
-                    end
-                    owner.DataPackage, owner.Room = nil
                 end
             else
                 print(ownerID.." socket disconnected")
                 GMAP.SendChatMessage("Slot "..ownerID.." was disconnected",color_white,true)
             end
-            hook.Run("AP_Disconnect",ownerID)
+
+            if wasconnected and self.ReconnectAttempts <= 1 then
+                hook.Run("AP_Disconnect",ownerID)
+            end
+
+            if reconnect then
+                owner:Connect()
+            elseif wasconnected then
+                GMAP.Rooms[owner.address].Members[ownerID] = nil
+                if table.IsEmpty(GMAP.Rooms[owner.address].Members) then
+                    GMAP.Rooms[owner.address] = nil
+                end
+                owner.DataPackage, owner.Room = nil
+                self.VoluntaryDC = nil
+            end
         end,
     }
 }
@@ -93,7 +107,6 @@ function APslotBase:Connect()
         self.Room = GMAP.Rooms[address]
         self.Room.Members[self.ID] = true
         local sock = self.Socket
-        self.Socket.VoluntaryDC = nil
         self.Socket:open()
         GMAP.Connected[self.ID] = self
         if self.forwardGMODchat then
@@ -103,8 +116,8 @@ function APslotBase:Connect()
 end
 
 function APslotBase:Disconnect()
-    self.Socket.VoluntaryDC = true
     if self.Socket:isConnected() then
+        self.Socket.VoluntaryDC = true
         self.Socket:close()
     else
         print("already disconnected")
