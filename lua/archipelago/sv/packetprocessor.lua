@@ -56,15 +56,16 @@ function PR.RoomInfo( packet , slot )
     if table.IsEmpty(datapack.games) then
       for k,v in pairs(packet.datapackage_checksums) do
         if file.Exists("archipelago/datapackages/"..k.."/"..v..".json","DATA") then
-          datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
-          local gamedp = datapack.games[k]
-          gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
-          gamedp.item_id_to_name = table.Flip(gamedp.item_name_to_id)
+            print("loading cached datapackage for "..k)
+            datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
+            local gamedp = datapack.games[k]
+            gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
+            gamedp.item_id_to_name = table.Flip(gamedp.item_name_to_id)
 
-          GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
-          GMAP.DataPackageRegister[k][v] = os.time()
+            GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
+            GMAP.DataPackageRegister[k][v] = os.time()
         else
-          requestedDPs[#requestedDPs+1] = k
+            requestedDPs[#requestedDPs+1] = k
         end
       end
     end
@@ -216,15 +217,15 @@ end
 
 -- rearranges the data from the ReceivedItems Packet into a format that allows for faster lookups
 local function ProcessItems(oldItems) 
-  local newItems = {}
-  for k,v in ipairs(oldItems) do
-    local ID = v.item
-    newItems[ID] = newItems[ID] or {}
-    local listpos = #newItems[ID]+1
-    newItems[ID][listpos] = table.Copy(v)
-    newItems[ID][listpos].item , newItems[ID][listpos].class = nil
-  end
-  return newItems
+    local newItems = {}
+    for k,v in ipairs(oldItems) do
+        local ID = v.item
+        newItems[ID] = newItems[ID] or {}
+        local listpos = #newItems[ID]+1
+        newItems[ID][listpos] = table.Copy(v)
+        newItems[ID][listpos].item , newItems[ID][listpos].class = nil
+    end
+    return newItems
 end
 
 function PR.ReceivedItems( packet , slot )
