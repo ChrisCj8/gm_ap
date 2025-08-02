@@ -9,6 +9,8 @@
 
 local PR = {}
 
+----------------- RoomInfo
+
 local RoomBase = { -- this is also present in slotbase.lua which isn't great
     Members = {},
     DataPackage = {
@@ -85,7 +87,7 @@ function PR.RoomInfo( packet , slot )
     slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..pwstring..'"slot_data":true,"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
 end
 
-
+------------------ Connected
 
 local function ProcessLocations(oldLctns, val)
     local newLctns = {}
@@ -134,8 +136,6 @@ function PR.Connected( packet , slot )
     end
     slot.Room.SlotInfo = packet.slot_info
 
-    slot.Items = {} or slot.Items
-
     hook.Run("AP_Connect",slot.ID)
     print("running ".."AP_"..slot.ID.."_LocationListUpdate")
     hook.Run("AP_"..slot.ID.."_LocationListUpdate")
@@ -164,20 +164,20 @@ function PR.Connected( packet , slot )
     slot:DataStoreSetNotify(giftboxkeys)
 end
 
-
+------------- ConnectionRefused
 
 function PR.ConnectionRefused( packet , slot )
     slot.Socket:close()
     print("Connection Refused: ", util.TableToJSON(packet.errors))
 end
 
-
+------------- PrintJSON
 
 local ownslotcolor = GMAP.Colors.apmagenta
 local otherslotcolor = GMAP.Colors.apyellow
 
 function PR.PrintJSON( packet , slot )
-    if not string.EndsWith( tostring(packet.data[1]["text"]) , slot.lastSentChat ) then -- does this still work?
+    if !slot.lastSentChat or !string.EndsWith( tostring(packet.data[1]["text"]) , slot.lastSentChat ) then -- does this still work?
         --AutoPrint(packet)
         if slot.forwardAPchat == true then
             if packet.type == "Chat" then
@@ -352,7 +352,7 @@ function PR.RoomUpdate( packet, slot )
     end
 end
 
-
+--------------- Retrieved
 
 local function DSHandler(slot, key, value)
     if string.StartsWith(key,"GiftBoxes;") then
@@ -382,7 +382,7 @@ function PR.Retrieved( packet, slot )
     end
 end 
 
-
+------------ SetReply
 
 function PR.SetReply( packet, slot )
     print("Received SetReply Package for "..slot.ID)
@@ -390,7 +390,7 @@ function PR.SetReply( packet, slot )
     DSHandler(slot,packet.key,packet.value)
 end
 
-
+------------ InvalidPacket
 
 function PR.InvalidPacket( packet, slot )
     print("Received InvalidPacket Packet")

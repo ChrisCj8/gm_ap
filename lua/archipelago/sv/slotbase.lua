@@ -85,7 +85,11 @@ local SocketBase = {
 table.Merge(SocketBase, FindMetaTable("WebSocket")) -- i feel like there's probably a better way do this but i've spent too much time on this
 --setmetatable(SocketBase, FindMetaTable("WebSocket"))
 
-local APslotBase = { lastSentChat = 0 }
+local APslotBase = {
+    Locations = {},
+    Items = {},
+    tags = {}
+}
 
 function APslotBase:Connect()
     if self.Socket != nil and self.Socket:isConnected() then
@@ -289,9 +293,6 @@ function GMAP.NewSlot( inputTable )
         newSlot.forwardAPchat = inputTable.forwardAPchat or false
         newSlot.forwardGMODchat = inputTable.forwardGMODchat or false
         newSlot.deathlink = inputTable.deathlink or false
-
-        newSlot.tags = {}
-        newSlot.Items = {}
 
         GMAP.Registered[newSlot.ID] = newSlot
 
