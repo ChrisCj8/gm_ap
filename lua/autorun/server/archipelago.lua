@@ -34,7 +34,11 @@ GMAP.ItemTypeColors = {
 
 setmetatable(GMAP.ItemTypeColors, {
     __index = function(self, key)
-        return GMAP.Colors.apcyan
+        local out = GMAP.Colors.apcyan
+        if isnumber(key) then
+            out = GMAP.ItemTypeColors[bit.band(key,7)]
+        end
+        return out
     end
 })
 
