@@ -165,11 +165,20 @@ function APslotBase:sendGoal()
     self.Socket:write('[{"cmd":"StatusUpdate","status":30}]')
 end
 
-function APslotBase:DataStoreGet(keys)
+function APslotBase:DataStoreGet(keys,callback)
     if !istable(keys) then
         keys = {keys}
     end
-    self.Socket:write('[{"cmd":"Get","keys":'..util.TableToJSON(keys)..'}]')
+
+    local cbstring = ""
+
+    if isfunction(callback) then
+        self.GetCBs[self.GetRequests] = callback
+        cbstring = ',"reqid":'..self.GetRequests
+        self.GetRequests = self.GetRequests + 1
+    end
+
+    self.Socket:write('[{"cmd":"Get","keys":'..util.TableToJSON(keys)..''..cbstring..'}]')
 end
 
 function APslotBase:DataStoreSet(key,default,want_reply,ops)

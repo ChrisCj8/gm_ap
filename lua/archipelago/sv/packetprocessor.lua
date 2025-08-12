@@ -136,6 +136,9 @@ function PR.Connected( packet , slot )
     end
     slot.Room.SlotInfo = packet.slot_info
 
+    slot.GetRequests = 0 -- used to attach a number to every get request we make so we can run a callback when we get a response
+    slot.GetCBs = {}
+
     hook.Run("AP_Connect",slot.ID)
     print("running ".."AP_"..slot.ID.."_LocationListUpdate")
     hook.Run("AP_"..slot.ID.."_LocationListUpdate")
@@ -376,7 +379,15 @@ end
 
 function PR.Retrieved( packet, slot )
     print("Received Retrieved Package for "..slot.ID)
-    PrintTable(packet.keys)
+    PrintTable(packet)
+    local store = true
+    if isfunction(slot.GetCBs[packet.reqid]) then
+        store = slot.GetCBs[packet.reqid](packet.keys)
+        slot.GetCBs[packet.reqid] = nil
+    end
+
+    if !store then return end
+
     for k,v in pairs(packet.keys) do
         DSHandler(slot,k,v)
     end
