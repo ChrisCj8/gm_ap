@@ -159,12 +159,12 @@ function PR.Connected( packet , slot )
         minimum_gift_data_version=3,
         maximum_gift_data_version=3,
     }}
-    slot:DataStoreSet("GiftBoxes;"..slot.team,giftboxproto,true,{{operation="update",value=""}})
+    --slot:DataStoreSet("GiftBoxes;"..slot.team,giftboxproto,true,{{operation="update",value=""}})
     -- gmods json converter automatically converts empty tables to arrays instead of dictonaries so we need to prewrite the command for this
-    slot.Socket:write('[{"cmd":"Set","want_reply":true,"key":"GiftBox;'..slot.team..';'..slot.Nr..'","default":{},"operations":[{"operation":"default","value":{}}]}]')
+    -- slot.Socket:write('[{"cmd":"Set","want_reply":true,"key":"GiftBox;'..slot.team..';'..slot.Nr..'","default":{},"operations":[{"operation":"default","value":{}}]}]')
     --slot:DataStoreSet("GiftBox;"..slot.team..";"..slot.Nr,{},true,{{operation="default",value=""}})
-    slot:DataStoreGet(giftboxkeys)
-    slot:DataStoreSetNotify(giftboxkeys)
+    --slot:DataStoreGet(giftboxkeys)
+    --slot:DataStoreSetNotify(giftboxkeys)
 end
 
 ------------- ConnectionRefused
