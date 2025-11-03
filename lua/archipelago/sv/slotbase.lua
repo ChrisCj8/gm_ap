@@ -27,8 +27,9 @@ local SocketBase = {
             print(self.Owner.." socket Error: ", err)
         end,
         onConnected = function(self)
-            print(self.Owner.." socket connected")
-            GMAP.SendChatMessage("Slot "..self.Owner.." was connected",color_white,true)
+            local ownerID = self.Owner
+            print(ownerID.." socket connected")
+            GMAP.SendChatMessage("Slot "..ownerID.." was connected",color_white,true)
             self.ReconnectAttempts = 0
         end,
         onDisconnected = function(self)
@@ -36,6 +37,7 @@ local SocketBase = {
             local owner = GMAP.Registered[ownerID]
 
             GMAP.Connected[ownerID] = nil
+            owner.Connected = false
             GMAP.ChatReaders[ownerID] = nil
 
             local reconnect = false
@@ -46,6 +48,7 @@ local SocketBase = {
                 GMAP.SendChatMessage("Slot "..ownerID.." couldn't connect",color_white,true)
                 wasconnected = false
             elseif self.VoluntaryDC == false then
+                owner.Reconnecting = true
                 local maxreconnects = reconnectCVAR:GetInt()
                 if self.ReconnectAttempts < maxreconnects then
                     self.ReconnectAttempts = self.ReconnectAttempts + 1
@@ -57,6 +60,7 @@ local SocketBase = {
                         GMAP.SendChatMessage("Slot "..ownerID.." lost connection" ,color_white,true)
                     else
                         GMAP.SendChatMessage("Slot "..ownerID.." lost connection, reconnect failed" ,color_white,true)
+                        owner.Reconnecting = false
                     end
                 end
             else
@@ -113,6 +117,7 @@ function APslotBase:Connect()
         local sock = self.Socket
         self.Socket:open()
         GMAP.Connected[self.ID] = self
+        self.Connected = true
         if self.forwardGMODchat then
             GMAP.ChatReaders[self.ID] = self
         end
