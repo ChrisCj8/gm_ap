@@ -80,13 +80,15 @@ end
 local function GenerateConfigData()
     local ConfigData = {}
     for k,v in pairs(GMAP.Registered) do
-        ConfigData[k] = {}
-        local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
-        for ik,iv in ipairs(CopyFields) do
-            ConfigData[k][iv] = v[iv]
-        end
-        if v.Socket != nil and v.Socket:isConnected() then
-            ConfigData[k].connected = true
+        if !v.dontStore then 
+            ConfigData[k] = {}
+            local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
+            for ik,iv in ipairs(CopyFields) do
+                ConfigData[k][iv] = v[iv]
+            end
+            if v.Socket != nil and v.Socket:isConnected() then
+                ConfigData[k].connected = true
+            end
         end
     end
     return ConfigData

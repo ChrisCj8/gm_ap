@@ -307,6 +307,7 @@ function GMAP.NewSlot( inputTable )
         newSlot.forwardAPchat = inputTable.forwardAPchat or false
         newSlot.forwardGMODchat = inputTable.forwardGMODchat or false
         newSlot.deathlink = inputTable.deathlink or false
+        newSlot.dontStore = inputTable.dontStore
 
         GMAP.Registered[newSlot.ID] = newSlot
 
