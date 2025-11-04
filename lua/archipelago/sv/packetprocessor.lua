@@ -84,7 +84,7 @@ function PR.RoomInfo( packet , slot )
         DPString = '{"cmd":"GetDataPackage","games":'..util.TableToJSON(requestedDPs)..'},'
     end
 
-    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..pwstring..'"slot_data":true,"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
+    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..pwstring..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
 end
 
 ------------------ Connected
@@ -112,7 +112,7 @@ function PR.Connected( packet , slot )
         GMAP.RunTrackers(slot.ID,"lctn",k)
     end
 
-    slot.slotData = packet.slot_data
+    slot.slotData = packet.slot_data or slot.slotData
     slot.Nr = packet.slot
     slot.hintPoints = packet.hint_points
     slot.team = packet.team
@@ -170,8 +170,9 @@ end
 ------------- ConnectionRefused
 
 function PR.ConnectionRefused( packet , slot )
+    slot.Socket.VoluntaryDC = true
     slot.Socket:close()
-    print("Connection Refused: ", util.TableToJSON(packet.errors))
+    GMAP.SendChatMessage("Connection Refused: "..util.TableToJSON(packet.errors),color_white,true)
 end
 
 ------------- PrintJSON

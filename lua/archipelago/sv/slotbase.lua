@@ -301,6 +301,7 @@ function GMAP.NewSlot( inputTable )
         newSlot.slotName = string.Left(inputTable.slotName,16)
         newSlot.password = inputTable.password or ""
         newSlot.game = inputTable.game or ""
+        newSlot.slotData = inputTable.slotData
 
         newSlot.textOnly = inputTable.textOnly or false
         newSlot.receiveAPchat = inputTable.receiveAPchat or false
