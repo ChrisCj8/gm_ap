@@ -49,7 +49,7 @@ GMAP.ChatReaders = GMAP.ChatReaders or {}
 hook.Add("PlayerSay","APChatReader", function( ply, text )
     for k,v in pairs(GMAP.ChatReaders) do
         if GMAP.Registered[v.ID].Socket:isConnected() then
-            GMAP.Registered[v.ID]:sendChatMessage("["..ply:Name().."] "..text)
+            GMAP.Registered[v.ID]:SendChatMessage("["..ply:Name().."] "..text)
         end
     end
 end)

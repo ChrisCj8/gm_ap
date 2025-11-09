@@ -133,12 +133,12 @@ function APslotBase:Disconnect()
     end
 end
 
-function APslotBase:sendChatMessage(txt)
+function APslotBase:SendChatMessage(txt)
     self.Socket:write('[{"cmd":"Say","text":"'..tostring(txt)..'"}]')
     self.lastSentChat = txt
 end
 
-function APslotBase:sendLocation(lctn,nodebug)
+function APslotBase:SendLocation(lctn,nodebug)
     if self.Locations == nil then
         if !nodebug then print("Location list not received yet") end
         return
@@ -162,11 +162,11 @@ function APslotBase:sendLocation(lctn,nodebug)
             print("Location does not exist")
         end
     elseif nodebug != true then
-        print("Invalid Type passed to sendLocation"..tostring(lctn))
+        print("Invalid Type passed to SendLocation"..tostring(lctn))
     end
 end
 
-function APslotBase:sendGoal()
+function APslotBase:SendGoal()
     self.Socket:write('[{"cmd":"StatusUpdate","status":30}]')
 end
 
@@ -260,11 +260,11 @@ function APslotBase:SendGift(targetTeam,targetID,giftTbl)
     }}))
 end
 
-function APslotBase:writeDataPackage()
+function APslotBase:WriteDataPackage()
     file.Write("archipelago/"..self.ID.."_datapackage.json",util.TableToJSON(self.Room.DataPackage,true))
 end
 
-function APslotBase:sendDeathLink(cause,nameoverride)
+function APslotBase:SendDeathLink(cause,nameoverride)
     self.Socket:write('[{"cmd":"Bounce","tags":["DeathLink"],"data":{"time":'..os.time()..',"source":"'..(nameoverride or self.ID)..'","cause":"'..cause..'"}}]')
 end
 
