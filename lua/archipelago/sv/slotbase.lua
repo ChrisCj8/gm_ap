@@ -278,6 +278,8 @@ function APslotBase:SendDeathLink(cause,nameoverride)
     self.Socket:write('[{"cmd":"Bounce","tags":["DeathLink"],"data":{"time":'..os.time()..',"source":"'..(nameoverride or self.ID)..'","cause":"'..cause..'"}}]')
 end
 
+function APslotBase:OnItemUpdate(id,itemlist) end
+
 function GMAP.NewSlot( inputTable )
     if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then
         print("Slot with same ID or Name already connected")

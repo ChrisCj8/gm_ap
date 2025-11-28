@@ -242,6 +242,7 @@ function PR.ReceivedItems( packet , slot )
     if packet.index == 0 then
         slot.Items = ProcessItems(packet.items)
         for k,v in pairs(slot.Items) do
+            slot:OnItemUpdate(k,v)
             GMAP.RunTrackers(slot.ID,"item",k)
         end
         hook.Run("AP_"..slot.ID.."_ItemListUpdate")
@@ -262,6 +263,7 @@ function PR.ReceivedItems( packet , slot )
             --print("itemsprocessed is nil")
             slot.Items[k] = newItems[k]
             end
+            slot:OnItemUpdate(k,slot.Items[k])
             GMAP.RunTrackers(slot.ID,"item",k)
         end
         hook.Run("AP_"..slot.ID.."_ItemListUpdate")
