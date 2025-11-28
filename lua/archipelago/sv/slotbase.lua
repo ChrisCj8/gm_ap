@@ -187,12 +187,22 @@ function APslotBase:DataStoreGet(keys,callback)
 end
 
 function APslotBase:DataStoreSet(key,default,want_reply,ops)
+    local reqid
+
+    if isfunction(want_reply) then
+        self.GetCBs[self.GetRequests] = want_reply
+        reqid = self.GetRequests
+        self.GetRequests = self.GetRequests + 1
+        want_reply = true
+    end
+
     self.Socket:write(util.TableToJSON({{
         cmd = "Set",
         key = key,
         default = default,
         want_reply = want_reply,
-        operations = ops
+        operations = ops,
+        reqid = reqid
     }}))
 end
 

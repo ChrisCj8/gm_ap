@@ -383,7 +383,7 @@ function PR.Retrieved( packet, slot )
     PrintTable(packet)
     local store = true
     if isfunction(slot.GetCBs[packet.reqid]) then
-        store = slot.GetCBs[packet.reqid](packet.keys)
+        store = slot.GetCBs[packet.reqid](packet)
         slot.GetCBs[packet.reqid] = nil
     end
 
@@ -398,7 +398,11 @@ end
 
 function PR.SetReply( packet, slot )
     print("Received SetReply Package for "..slot.ID)
-    PrintTable(packet)
+    if packet.reqid and isfunction(slot.GetCBs[packet.reqid]) then
+        slot.GetCBs[packet.reqid](packet)
+        slot.GetCBs[packet.reqid] = nil
+    end
+
     DSHandler(slot,packet.key,packet.value)
 end
 
