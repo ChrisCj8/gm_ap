@@ -259,11 +259,11 @@ function PR.ReceivedItems( packet , slot )
         for k, v in pairs(newItems) do
             print(k,v)
             if slot.Items[k] != nil then
-            --PrintTable(slot.Items[k])
-            table.Add(slot.Items[k],newItems[k])
+                --PrintTable(slot.Items[k])
+                table.Add(slot.Items[k],newItems[k])
             else
-            --print("itemsprocessed is nil")
-            slot.Items[k] = newItems[k]
+                --print("itemsprocessed is nil")
+                slot.Items[k] = newItems[k]
             end
             slot:OnItemUpdate(k,slot.Items[k])
             GMAP.RunTrackers(slot.ID,"item",k)
