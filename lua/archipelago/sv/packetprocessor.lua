@@ -82,6 +82,8 @@ function PR.RoomInfo( packet , slot )
     if !table.IsEmpty(requestedDPs) then
         print("requesting DataPackages for: "..util.TableToJSON(requestedDPs))
         DPString = '{"cmd":"GetDataPackage","games":'..util.TableToJSON(requestedDPs)..'},'
+    else
+        slot:OnDataPackageLoad(datapack)
     end
 
     slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..pwstring..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
@@ -293,6 +295,7 @@ function PR.DataPackage( packet , slot )
     end
 
     table.Merge(slot.Room.DataPackage, packet.data)
+    slot:OnDataPackageLoad(slot.Room.DataPackage)
 end 
 
 -------------------- Bounced

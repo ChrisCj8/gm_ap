@@ -280,6 +280,8 @@ end
 
 function APslotBase:OnItemUpdate(id,itemlist) end
 
+function APslotBase:OnDataPackageLoad(datapackage) end
+
 function GMAP.NewSlot( inputTable )
     if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then
         print("Slot with same ID or Name already connected")
