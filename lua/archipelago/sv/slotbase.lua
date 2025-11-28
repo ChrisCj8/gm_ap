@@ -31,6 +31,7 @@ local SocketBase = {
             print(ownerID.." socket connected")
             GMAP.SendChatMessage("Slot "..ownerID.." was connected",color_white,true)
             self.ReconnectAttempts = 0
+            GMAP.Registered[ownerID].Reconnecting = nil
         end,
         onDisconnected = function(self)
             local ownerID = self.Owner
