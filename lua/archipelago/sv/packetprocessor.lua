@@ -37,6 +37,8 @@ function PR.RoomInfo( packet , slot )
     end
     table.Merge(GMAP.Rooms[slot.address],packet)
 
+    slot.Room = GMAP.Rooms[slot.address]
+
     local gamename = slot.game
     local tags = {}
     if slot.receiveAPchat == false then
