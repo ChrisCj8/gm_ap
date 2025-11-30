@@ -114,6 +114,7 @@ function PR.Connected( packet , slot )
     slot.Locations = table.Merge(ProcessLocations(packet.missing_locations,false),ProcessLocations(packet.checked_locations,true))
     for k,v in pairs(slot.Locations) do
         GMAP.RunTrackers(slot.ID,"lctn",k)
+        slot:OnLocationUpdate(k,v)
     end
 
     slot.slotData = packet.slot_data or slot.slotData
@@ -342,6 +343,7 @@ function PR.RoomUpdate( packet, slot )
             if slot.Locations[v] != true then
                 slot.Locations[v] = true
                 GMAP.RunTrackers(slot.ID,"lctn",v)
+                slot:OnLocationUpdate(v,true)
                 hook.Run("AP_"..slot.ID.."_LocationListUpdate")
             end
         end

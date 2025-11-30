@@ -281,6 +281,8 @@ end
 
 function APslotBase:OnItemUpdate(id,itemlist) end
 
+function APslotBase:OnLocationUpdate(id,state) end
+
 function APslotBase:OnDataPackageLoad(datapackage) end
 
 function GMAP.NewSlot( inputTable )
