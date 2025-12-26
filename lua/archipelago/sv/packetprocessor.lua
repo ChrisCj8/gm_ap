@@ -41,19 +41,24 @@ function PR.RoomInfo( packet , slot )
 
     local gamename = slot.game
     local tags = {}
+    local tagnr = 0
     if slot.receiveAPchat == false then
-        tags[#tags+1] = "NoText"
+        tagnr = tagnr + 1
+        tags[tagnr] = "NoText"
     end
     slot.cantSendLocations = nil
     if slot.textOnly == true or gamename == "" then
-        tags[#tags+1] = "TextOnly"
+        tagnr = tagnr + 1
+        tags[tagnr] = "TextOnly"
         slot.cantSendLocations = true
     end
     if slot.deathlink == true then
-        tags[#tags+1] = "DeathLink"
+        tagnr = tagnr + 1
+        tags[tagnr] = "DeathLink"
     end
 
     local requestedDPs = {}
+    local reqdpcount = 0
 
     local datapack = slot.Room.DataPackage
 
@@ -73,7 +78,8 @@ function PR.RoomInfo( packet , slot )
                     GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
                     GMAP.DataPackageRegister[k][v] = os.time()
                 else
-                    requestedDPs[#requestedDPs+1] = k
+                    reqdpcount = reqdpcount + 1
+                    requestedDPs[reqdpcount] = k
                 end
             end
         end
@@ -81,8 +87,8 @@ function PR.RoomInfo( packet , slot )
 
     local DPString = ""
 
-    if !table.IsEmpty(requestedDPs) then
-        print("requesting DataPackages for: "..util.TableToJSON(requestedDPs))
+    if reqdpcount > 0 then
+        --print("requesting DataPackages for: "..util.TableToJSON(requestedDPs))
         DPString = '{"cmd":"GetDataPackage","games":'..util.TableToJSON(requestedDPs)..'},'
     else
         slot:OnDataPackageLoad(datapack)
@@ -187,7 +193,6 @@ local otherslotcolor = GMAP.Colors.apyellow
 
 function PR.PrintJSON( packet , slot )
     if !slot.lastSentChat or !string.EndsWith( tostring(packet.data[1]["text"]) , slot.lastSentChat ) then -- does this still work?
-        --AutoPrint(packet)
         if slot.forwardAPchat == true then
             if packet.type == "Chat" then
                 local num = packet.slot
@@ -289,12 +294,12 @@ function PR.DataPackage( packet , slot )
         if !file.IsDir("/archipelago/datapackages/"..k.."/","DATA") then
             file.CreateDir("archipelago/datapackages/"..k)
         end
-        file.Write("archipelago/datapackages/"..k.."/"..packet.data.games[k].checksum..".json",util.TableToJSON(packet.data.games[k],true)) -- could set the prettyprint option in tabletojson to false later to save some space
-        packet.data.games[k].location_id_to_name = table.Flip(v.location_name_to_id)
-        packet.data.games[k].item_id_to_name = table.Flip(v.item_name_to_id)
+        file.Write("archipelago/datapackages/"..k.."/"..v.checksum..".json",util.TableToJSON(v,true)) -- could set the prettyprint option in tabletojson to false later to save some space
+        v.location_id_to_name = table.Flip(v.location_name_to_id)
+        v.item_id_to_name = table.Flip(v.item_name_to_id)
 
         GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
-        GMAP.DataPackageRegister[k][packet.data.games[k].checksum] = os.time()
+        GMAP.DataPackageRegister[k][v.checksum] = os.time()
     end
 
     table.Merge(slot.Room.DataPackage, packet.data)
@@ -391,8 +396,9 @@ function PR.Retrieved( packet, slot )
     print("Received Retrieved Package for "..slot.ID)
     PrintTable(packet)
     local store = true
-    if isfunction(slot.GetCBs[packet.reqid]) then
-        store = slot.GetCBs[packet.reqid](packet)
+    local cb = slot.GetCBs[packet.reqid]
+    if isfunction(cb) then
+        store = cb(packet)
         slot.GetCBs[packet.reqid] = nil
     end
 
@@ -407,9 +413,11 @@ end
 
 function PR.SetReply( packet, slot )
     print("Received SetReply Package for "..slot.ID)
-    if packet.reqid and isfunction(slot.GetCBs[packet.reqid]) then
-        slot.GetCBs[packet.reqid](packet)
-        slot.GetCBs[packet.reqid] = nil
+    local reqid = packet.reqid
+    local cbtbl = slot.GetCBs 
+    if reqid and isfunction(cbtbl[reqid]) then
+        cbtbl[reqid](packet)
+        cbtbl[reqid] = nil
     end
 
     DSHandler(slot,packet.key,packet.value)

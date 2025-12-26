@@ -1,6 +1,8 @@
 require("gwsockets") 
 
 local reconnectCVAR = CreateConVar("sv_gmap_max_reconnects",3,FCVAR_ARCHIVE,"How many times a slot should attempt to reestablish a connection after losing it.",0)
+local FromJSON = util.JSONToTable
+local ToJSON = util.TableToJSON
 
 local RoomBase = {
     Members = {},
@@ -17,7 +19,7 @@ local SocketBase = {
     __index = {
         onMessage = function(self,txt)
             local slot = GMAP.Registered[self.Owner]
-            local packet = util.JSONToTable(txt)
+            local packet = FromJSON(txt)
             for k,v in ipairs(packet) do
                 --print("received package type",v.cmd,k)
                 GMAP.PacketProcessor[v.cmd](v,slot)
@@ -76,9 +78,11 @@ local SocketBase = {
             if reconnect then
                 owner:Connect()
             elseif wasconnected then
-                GMAP.Rooms[owner.address].Members[ownerID] = nil
-                if table.IsEmpty(GMAP.Rooms[owner.address].Members) then
-                    GMAP.Rooms[owner.address] = nil
+                local rooms = GMAP.Rooms
+                local addr = owner.address
+                rooms[addr].Members[ownerID] = nil
+                if !next(rooms[addr].Members) then
+                    rooms[addr] = nil
                 end
                 owner.DataPackage, owner.Room = nil
                 self.VoluntaryDC = nil
@@ -184,7 +188,7 @@ function APslotBase:DataStoreGet(keys,callback)
         self.GetRequests = self.GetRequests + 1
     end
 
-    self.Socket:write('[{"cmd":"Get","keys":'..util.TableToJSON(keys)..''..cbstring..'}]')
+    self.Socket:write('[{"cmd":"Get","keys":'..ToJSON(keys)..''..cbstring..'}]')
 end
 
 function APslotBase:DataStoreSet(key,default,want_reply,ops)
@@ -197,7 +201,7 @@ function APslotBase:DataStoreSet(key,default,want_reply,ops)
         want_reply = true
     end
 
-    self.Socket:write(util.TableToJSON({{
+    self.Socket:write(ToJSON({{
         cmd = "Set",
         key = key,
         default = default,
@@ -211,7 +215,7 @@ function APslotBase:DataStoreSetNotify(keys)
     if !istable(keys) then
         keys = {keys}
     end
-    self.Socket:write('[{"cmd":"SetNotify","keys":'..util.TableToJSON(keys)..'}]')
+    self.Socket:write('[{"cmd":"SetNotify","keys":'..ToJSON(keys)..'}]')
 end
 
 function APslotBase:SendGift(targetTeam,targetID,giftTbl)
@@ -259,7 +263,7 @@ function APslotBase:SendGift(targetTeam,targetID,giftTbl)
         giftTbl.amount = 1
     end
     giftTbl.amount = math.floor(giftTbl.amount)
-    self.Socket:write(util.TableToJSON({{
+    self.Socket:write(ToJSON({{
         cmd = "Set",
         key = "GiftBox;"..targetTeam..";"..targetID,
         default = {},
@@ -272,7 +276,7 @@ function APslotBase:SendGift(targetTeam,targetID,giftTbl)
 end
 
 function APslotBase:WriteDataPackage()
-    file.Write("archipelago/"..self.ID.."_datapackage.json",util.TableToJSON(self.Room.DataPackage,true))
+    file.Write("archipelago/"..self.ID.."_datapackage.json",ToJSON(self.Room.DataPackage,true))
 end
 
 function APslotBase:SendDeathLink(cause,nameoverride)
