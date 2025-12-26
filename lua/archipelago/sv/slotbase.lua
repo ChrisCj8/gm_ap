@@ -161,6 +161,7 @@ function APslotBase:SendLocation(lctn,nodebug)
             self.Socket:write('[{"cmd":"LocationChecks","locations":['..tostring(lctn)..']}]')
             self.Locations[lctn] = true
             GMAP.RunTrackers(self.ID,"lctn",lctn)
+            self:OnLocationUpdate(lctn,true)
         elseif self.Locations[lctn] == true then
             print("Location already sent")
         else
