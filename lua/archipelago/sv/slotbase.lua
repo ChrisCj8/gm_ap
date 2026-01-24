@@ -41,6 +41,7 @@ local SocketBase = {
 
             GMAP.Connected[ownerID] = nil
             owner.Connected = false
+            owner.FullData = false
             GMAP.ChatReaders[ownerID] = nil
 
             local reconnect = false
@@ -288,7 +289,22 @@ function APslotBase:OnItemUpdate(id,itemlist) end
 
 function APslotBase:OnLocationUpdate(id,state) end
 
+function APslotBase:PostDataPackageLoad(dp)
+    self.DPLoaded = true
+    self:OnDataPackageLoad(dp)
+    self:CheckFullData()
+end
+
 function APslotBase:OnDataPackageLoad(datapackage) end
+
+function APslotBase:CheckFullData()
+    if self.DPLoaded and self.slotData and self.Locations then
+        self.FullData = true
+        self:OnFullData()
+    end
+end
+
+function APslotBase:OnFullData() end
 
 function GMAP.NewSlot( inputTable )
     if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then
