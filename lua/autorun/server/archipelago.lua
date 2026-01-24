@@ -21,15 +21,17 @@ end
 
 include("archipelago/sv/dpmanagement.lua")
 
+local cols = GMAP.Colors
+
 GMAP.ItemTypeColors = {
-    [0] = GMAP.Colors.apcyan, -- normal
-    [1] = GMAP.Colors.applum, -- progression
-    [2] = GMAP.Colors.apslateblue, -- useful
-    [3] = GMAP.Colors.applum, -- proguseful
-    [4] = GMAP.Colors.apsalmon, -- trap
-    [5] = GMAP.Colors.applum, -- progtrap
-    [6] = GMAP.Colors.apslateblue, -- usefultrap
-    [7] = GMAP.Colors.applum, -- progusefultrap
+    [0] = cols.apcyan, -- normal
+    [1] = cols.applum, -- progression
+    [2] = cols.apslateblue, -- useful
+    [3] = cols.applum, -- proguseful
+    [4] = cols.apsalmon, -- trap
+    [5] = cols.applum, -- progtrap
+    [6] = cols.apslateblue, -- usefultrap
+    [7] = cols.applum, -- progusefultrap
 }
 
 setmetatable(GMAP.ItemTypeColors, {
@@ -48,8 +50,9 @@ GMAP.ChatReaders = GMAP.ChatReaders or {}
 
 hook.Add("PlayerSay","APChatReader", function( ply, text )
     for k,v in pairs(GMAP.ChatReaders) do
-        if GMAP.Registered[v.ID].Socket:isConnected() then
-            GMAP.Registered[v.ID]:SendChatMessage("["..ply:Name().."] "..text)
+        local slot = GMAP.Registered[v.ID]
+        if slot.Socket:isConnected() then
+            slot:SendChatMessage("["..ply:Name().."] "..text)
         end
     end
 end)
@@ -122,21 +125,17 @@ local ConfigInfo = ConfigInfo or {}
 
 net.Receive("APConfiguratorInfoSender", function(len,ply)
     table.Add(ConfigSenderTable,{net.ReadString()})
-    --PrintTable(ConfigSenderTable)
     if net.ReadBool() then
         ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
-        --print("printing received ConfigInfo")
-        --PrintTable(ConfigInfo)
-        --local ID = ConfigInfo.ID
-        --ConfigInfo.ID = nil
         if ConfigInfo.ID == "" then
             ConfigInfo.ID = ConfigInfo.slotName
         end
 
-        local slottbl = GMAP.Registered[ConfigInfo.ID]
+        local id = ConfigInfo.ID
+        local slottbl = GMAP.Registered[id]
 
         if slottbl != nil then
-            if GMAP.Connected[ConfigInfo.ID] != nil then
+            if GMAP.Connected[id] != nil then
                 if ConfigInfo.receiveAPchat != slottbl.receiveAPchat or ConfigInfo.deathlink != slottbl.deathlink then
                     local tags = {}
                     if slottbl.cantSendLocations == true then
@@ -148,12 +147,12 @@ net.Receive("APConfiguratorInfoSender", function(len,ply)
                     if ConfigInfo.deathlink == true then
                         tags[#tags+1] = "DeathLink"
                     end
-                    GMAP.Connected[ConfigInfo.ID].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
+                    GMAP.Connected[id].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
                 end
-                if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[ConfigInfo.ID] == nil then
-                    GMAP.ChatReaders[ConfigInfo.ID] = slottbl
-                elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[ConfigInfo.ID] != nil then
-                    GMAP.ChatReaders[ConfigInfo.ID] = nil
+                if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[id] == nil then
+                    GMAP.ChatReaders[id] = slottbl
+                elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[id] != nil then
+                    GMAP.ChatReaders[id] = nil
                 end
                 if ConfigInfo.address != slottbl.address then
                     ConfigInfo.address = nil
@@ -161,10 +160,10 @@ net.Receive("APConfiguratorInfoSender", function(len,ply)
                 end
             end
             table.Merge(slottbl,ConfigInfo)
-            print("updated slot "..ConfigInfo.ID)
+            print("updated slot "..id)
         else
             GMAP.NewSlot(ConfigInfo)
-            print("created new slot "..ConfigInfo.ID)
+            print("created new slot "..id)
         end
         ConfigSenderTable = {}
         ConfigSender(ply)
