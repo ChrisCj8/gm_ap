@@ -84,14 +84,15 @@ local function GenerateConfigData()
     local ConfigData = {}
     for k,v in pairs(GMAP.Registered) do
         if !v.dontStore then 
-            ConfigData[k] = {}
+            local data = {}
             local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
             for ik,iv in ipairs(CopyFields) do
-                ConfigData[k][iv] = v[iv]
+                data[iv] = v[iv]
             end
             if v.Socket != nil and v.Socket:isConnected() then
-                ConfigData[k].connected = true
+                data.connected = true
             end
+            ConfigData[k] = data
         end
     end
     return ConfigData
@@ -110,14 +111,15 @@ end
 
 local function ConfigSender(ply)
     local ConfigString = util.TableToJSON(GenerateConfigData())
+    local done
     repeat
         net.Start("APConfiguratorInfoSender")
             net.WriteString(string.sub(ConfigString,0,64000))
             ConfigString = (string.sub(ConfigString,64001))
-            net.WriteBool(#ConfigString == 0)
-            --print((net.BytesWritten()).." bytes")
+            done = ConfigString == ""
+            net.WriteBool(done)
         net.Send( ply )
-    until #ConfigString == 0
+    until done
 end
 
 local ConfigSenderTable = ConfigSenderTable or {}
