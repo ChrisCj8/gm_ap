@@ -441,8 +441,4 @@ setmetatable(PR, {
   end
 })
 
-/*
-    this doesn't really need to be in the global variable since it's only called once in the Socket Bases onmessage event 
-    but doing it like this makes it easier to debug since gmod wouldn't reload it otherwise
-*/
-GMAP.PacketProcessor = PR
+return PR

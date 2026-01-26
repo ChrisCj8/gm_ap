@@ -13,13 +13,13 @@ local RoomBase = {
     GiftBoxes = {},
 }
 
-include("archipelago/sv/packetprocessor.lua")
+local PR = include("archipelago/sv/packetprocessor.lua")
 
 local SocketBase = {
     __index = {
         onMessage = function(self,txt)
             for k,v in ipairs(FromJSON(txt)) do
-                GMAP.PacketProcessor[v.cmd](v,self.Owner)
+                PR[v.cmd](v,self.Owner)
             end
         end,
         onError =  function(self,err)
