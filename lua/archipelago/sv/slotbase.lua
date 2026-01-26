@@ -18,26 +18,23 @@ include("archipelago/sv/packetprocessor.lua")
 local SocketBase = {
     __index = {
         onMessage = function(self,txt)
-            local slot = GMAP.Registered[self.Owner]
-            local packet = FromJSON(txt)
-            for k,v in ipairs(packet) do
-                --print("received package type",v.cmd,k)
-                GMAP.PacketProcessor[v.cmd](v,slot)
+            for k,v in ipairs(FromJSON(txt)) do
+                GMAP.PacketProcessor[v.cmd](v,self.Owner)
             end
         end,
         onError =  function(self,err)
-            print(self.Owner.." socket Error: ", err)
+            print(self.OwnerID.." socket Error: ", err)
         end,
         onConnected = function(self)
-            local ownerID = self.Owner
+            local ownerID = self.OwnerID
             print(ownerID.." socket connected")
             GMAP.SendChatMessage("Slot "..ownerID.." was connected",color_white,true)
             self.ReconnectAttempts = 0
-            GMAP.Registered[ownerID].Reconnecting = nil
+            self.Owner.Reconnecting = nil
         end,
         onDisconnected = function(self)
-            local ownerID = self.Owner
-            local owner = GMAP.Registered[ownerID]
+            local ownerID = self.OwnerID
+            local owner = self.Owner
 
             GMAP.Connected[ownerID] = nil
             owner.Connected = false
@@ -113,7 +110,8 @@ function APslotBase:Connect()
             setmetatable(sock, SocketBase)
 
             sock:setMessageCompression(true)
-            sock.Owner = self.ID
+            sock.OwnerID = self.ID
+            sock.Owner = self
             sock.Address = address
             sock.ReconnectAttempts = 0
         end
