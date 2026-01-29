@@ -70,7 +70,7 @@ local SocketBase = {
             end
 
             if wasconnected and self.ReconnectAttempts <= 1 then
-                hook.Run("AP_Disconnect",ownerID)
+                owner:DCHandler()
             end
 
             if reconnect then
@@ -135,6 +135,16 @@ function APslotBase:Disconnect()
     else
         print("already disconnected")
     end
+end
+
+function APslotBase:ConnectHandler()
+    ProtectedCall(self.OnConnect,self)
+    hook.Run("AP_Connect",self.ID)
+end
+
+function APslotBase:DCHandler()
+    ProtectedCall(self.OnDisconnect,self)
+    hook.Run("AP_Disconnect",self.ID)
 end
 
 function APslotBase:SendChatMessage(txt)
@@ -302,7 +312,9 @@ function APslotBase:CheckFullData()
     end
 end
 
+function APslotBase:OnConnect() end
 function APslotBase:OnFullData() end
+function APslotBase:OnDisconnect() end
 
 function GMAP.NewSlot( inputTable )
     if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then

@@ -150,7 +150,7 @@ function PR.Connected( packet , slot )
     slot.GetRequests = 0 -- used to attach a number to every get request we make so we can run a callback when we get a response
     slot.GetCBs = {}
 
-    hook.Run("AP_Connect",slot.ID)
+    slot:ConnectHandler()
     print("running ".."AP_"..slot.ID.."_LocationListUpdate")
     hook.Run("AP_"..slot.ID.."_LocationListUpdate")
     print("running ".."AP_"..slot.ID.."_ItemListUpdate")
