@@ -93,7 +93,6 @@ table.Merge(SocketBase, FindMetaTable("WebSocket")) -- i feel like there's proba
 --setmetatable(SocketBase, FindMetaTable("WebSocket"))
 
 local APslotBase = {
-    Locations = {},
     Items = {},
     tags = {}
 }
