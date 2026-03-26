@@ -28,7 +28,7 @@ function GMAP.DPCleanup()
                     file.Delete("archipelago/datapackages/"..k.."/")
                 end
             end
-            if table.IsEmpty(v) then
+            if !next(v) then
                 GMAP.DataPackageRegister[k] = nil
             end
         end
