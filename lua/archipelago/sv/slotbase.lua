@@ -23,7 +23,8 @@ local SocketBase = {
             end
         end,
         onError =  function(self,err)
-            print(self.OwnerID.." socket Error: ", err)
+            GMAP.SendChatMessage(self.OwnerID.." Socket Error:",color_white,true)
+            GMAP.SendChatMessage(err,color_white,true)
         end,
         onConnected = function(self)
             local ownerID = self.OwnerID
