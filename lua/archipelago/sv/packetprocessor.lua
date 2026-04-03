@@ -87,7 +87,7 @@ function PR.RoomInfo( packet , slot )
         slot:PostDataPackageLoad(datapack)
     end
 
-    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or "")..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
+    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or '"password":"",')..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
 end
 
 ------------------ Connected
