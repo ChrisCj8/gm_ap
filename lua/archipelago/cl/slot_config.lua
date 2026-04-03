@@ -1,6 +1,10 @@
+local devmodecvar = CreateClientConVar("gmap_showslotconfig",0,false,false,"Controls whether or not the slot configurator is accessible in the utilities menu.",0,1)
+
 hook.Add( "AddToolMenuCategories", "ArchipelagoCategories", function()
-    spawnmenu.AddToolCategory( "Utilities", "Archipelago", "Archipelago" )
-    spawnmenu.AddToolMenuOption( "Utilities", "Archipelago", "APSlotConfig", "#menu.ap_slot_config.title", "", "", BuildSlotConfigMenu )
+    if devmodecvar:GetBool() then
+        spawnmenu.AddToolCategory( "Utilities", "Archipelago", "Archipelago" )
+        spawnmenu.AddToolMenuOption( "Utilities", "Archipelago", "APSlotConfig", "#menu.ap_slot_config.title", "", "", BuildSlotConfigMenu )
+    end
 end)
 
 local SlotConfigPanel = SlotConfigPanel or {}
