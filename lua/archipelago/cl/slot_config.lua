@@ -31,6 +31,62 @@ function BuildSlotConfigMenu(panel)
     SlotConfigPanel = panel
     panel:Clear()
 
+    --local HintBox = vgui.Create("DHTML",panel)
+    local HintText = vgui.Create("DLabel",panel)
+    HintText:SetDark(true)
+    HintText:SetText("")
+    HintText:SetAutoStretchVertical(true)
+    HintText:SetWrap(true)
+    /* HintBox:SetHTML([[
+        <head>
+            <style>
+                @font-face {
+                    font-family:mainfont;
+                    src: url(asset://garrysmod/resource/fonts/Roboto-Light.ttf);
+                }
+
+                * {
+                    font-family: mainfont;
+                    font-size: 10px;
+                    color: black;
+                }
+            </style>
+        </head>
+        <body>
+            <script>
+                const body = document.body;
+
+                function setText(text) {
+                    body.innerHTML = text
+                }
+            </script>
+        </body>
+    ]])
+    HintBox:SetHeight(100)*/
+
+    local function ReportHover(pnl)
+        --HintBox:QueueJavascript('setText("'..language.GetPhrase("menu.ap_slot_config.hint."..pnl.HintName)..'")')
+        local hint = pnl.HintName
+        if hint then
+            HintText:SetText(language.GetPhrase("menu.ap_slot_config.hint."..hint))
+        else
+            HintText:SetText("")
+        end
+    end
+
+    local function CheckBox(locname,indent)
+        local pnl = vgui.Create("DCheckBoxLabel", panel)
+        pnl:SetText("#menu.ap_slot_config."..locname)
+        pnl:SetDark(true)
+        pnl:SetIndent(indent)
+        local hintloc = "menu.ap_slot_config.hint."..locname
+        if language.GetPhrase(hintloc) != hintloc then
+            pnl.HintName = locname
+        end
+        pnl.OnCursorEntered = ReportHover
+        return pnl
+    end
+
     local ActiveSlotsLabel = vgui.Create("DLabel",panel)
     ActiveSlotsLabel:SetText("#menu.ap_slot_config.registeredslots")
     ActiveSlotsLabel:SetDark(true)
@@ -91,7 +147,7 @@ function BuildSlotConfigMenu(panel)
     local labelwidth = 70
     local scalinginputs = {}
 
-    local function GenerateTextInput(labelText)
+    local function GenerateTextInput(labelText,hintname)
         local TextInput = vgui.Create("DPanel", panel)
         TextInput:SetPaintBackground(false)
         TextInput:StretchToParent(0,0,0)
@@ -106,49 +162,36 @@ function BuildSlotConfigMenu(panel)
             TextInput.Input = vgui.Create("DTextEntry", TextInput)
             TextInput.Input:AlignLeft(labelwidth + 20)
 
+            if hintname != nil then
+                TextInput.Label.OnCursorEntered = ReportHover
+                TextInput.Label.HintName = hintname
+                TextInput.Input.OnCursorEntered = ReportHover
+                TextInput.Input.HintName = hintname
+            end
+
             scalinginputs[#scalinginputs+1] = TextInput.Input
 
         return TextInput
     end
 
-    local IdentifierInput = GenerateTextInput("#menu.ap_slot_config.slot_identifier")
-    local SlotNameInput = GenerateTextInput("Slot Name")
-
+    local IdentifierInput = GenerateTextInput("#menu.ap_slot_config.slot_identifier","identifier")
+    local SlotNameInput = GenerateTextInput("Slot Name","slotname")
 
     function SlotNameInput.Input:OnChange()
         IdentifierInput.Input:SetPlaceholderText(self:GetValue())
     end
 
-    local AddressInput = GenerateTextInput("#menu.ap_slot_config.slot_address")
+    local AddressInput = GenerateTextInput("#menu.ap_slot_config.slot_address","address")
     AddressInput.Input:SetPlaceholderText("ws://localhost:38281")
 
-    local SlotPasswordInput = GenerateTextInput("#menu.ap_slot_config.slot_pass")
-    local GameInput = GenerateTextInput("#menu.ap_slot_config.game_name")
+    local SlotPasswordInput = GenerateTextInput("#menu.ap_slot_config.slot_pass","password")
+    local GameInput = GenerateTextInput("#menu.ap_slot_config.game_name","game")
 
-    local TextOnlyCheck = vgui.Create("DCheckBoxLabel", panel)
-    TextOnlyCheck:SetText("#menu.ap_slot_config.text_only_check")
-    TextOnlyCheck:SetTextColor(color_black)
-    TextOnlyCheck:SetIndent(30)
-
-    local ReceiveAPchatCheck = vgui.Create("DCheckBoxLabel", panel)
-    ReceiveAPchatCheck:SetText("#menu.ap_slot_config.receive_chat_check")
-    ReceiveAPchatCheck:SetTextColor(color_black)
-    ReceiveAPchatCheck:SetIndent(30)
-
-    local ForwardAPchatCheck = vgui.Create("DCheckBoxLabel", panel)
-    ForwardAPchatCheck:SetText("#menu.ap_slot_config.forward_to_gmod_chat")
-    ForwardAPchatCheck:SetTextColor(color_black)
-    ForwardAPchatCheck:SetIndent(40)
-
-    local ForwardGMODchatCheck = vgui.Create("DCheckBoxLabel", panel)
-    ForwardGMODchatCheck:SetText("#menu.ap_slot_config.forward_to_ap_chat")
-    ForwardGMODchatCheck:SetDark(true)
-    ForwardGMODchatCheck:SetIndent(40)
-
-    local DeathlinkCheck = vgui.Create("DCheckBoxLabel", panel)
-    DeathlinkCheck:SetText("#menu.ap_slot_config.deathlink_check")
-    DeathlinkCheck:SetTextColor(color_black)
-    DeathlinkCheck:SetIndent(30)
+    local TextOnlyCheck = CheckBox("text_only_check",20)
+    local ReceiveAPchatCheck = CheckBox("receive_chat_check",20)
+    local ForwardAPchatCheck = CheckBox("forward_to_gmod_chat",30)
+    local ForwardGMODchatCheck = CheckBox("forward_to_ap_chat",30)
+    local DeathlinkCheck = CheckBox("deathlink_check",20)
 
     local UpdateButton = vgui.Create("DButton",panel)
     function UpdateButton:DoClick()
@@ -195,6 +238,19 @@ function BuildSlotConfigMenu(panel)
     panel:AddItem(ForwardGMODchatCheck)
     panel:AddItem(DeathlinkCheck)
     panel:AddItem(UpdateButton)
+    panel:AddItem(HintText)
+
+    local hintelements = {
+        [DeathlinkCheck] = "deathlink"
+    }
+
+    for k,v in pairs(hintelements) do
+        k.OnCursorEntered = ReportHover
+        k.HintName = v
+    end
+
+    --HintBox:StretchToParent(0,nil,0)
+    --HintText:StretchToParent(0,0,0,0)
 
     function SlotsPanel:OnRowSelected( rowIndex, rowPanel )
         local configtbl = ConfigInfo[rowPanel:GetValue(1)]
