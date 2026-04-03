@@ -1,4 +1,4 @@
-list.Set( "ContentCategoryIcons", "Archipelago", "icon16/ap.png" )
+list.Set( "ContentCategoryIcons", "Archipelago", "archipelago/ap16.png" )
 
 local APMessageTable = {}
 
