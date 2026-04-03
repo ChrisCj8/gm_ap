@@ -25,13 +25,6 @@ function PR.RoomInfo( packet , slot )
     print("Received RoomInfo, GMOD and AP time difference: ", os.time() - packet.time )
     packet.cmd = nil
 
-    local pwstring = '"password":"'..slot.password..'",'
-    if packet.password then
-
-    end
-
-    packet.password = nil
-
     if GMAP.Rooms[slot.address].seed_name != packet.seed_name then
         GMAP.Rooms[slot.address] = table.Copy(RoomBase)
     end
@@ -94,7 +87,7 @@ function PR.RoomInfo( packet , slot )
         slot:PostDataPackageLoad(datapack)
     end
 
-    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..pwstring..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
+    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or "")..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
 end
 
 ------------------ Connected
