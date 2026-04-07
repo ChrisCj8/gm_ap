@@ -146,6 +146,7 @@ function PR.Connected( packet , slot )
     slot:ConnectHandler()
     print("running ".."AP_"..slot.ID.."_LocationListUpdate")
     hook.Run("AP_"..slot.ID.."_LocationListUpdate")
+    slot.Items = {}
     print("running ".."AP_"..slot.ID.."_ItemListUpdate")
     hook.Run("AP_"..slot.ID.."_ItemListUpdate")
     slot.Socket:write('[{"cmd":"Sync"}]')
