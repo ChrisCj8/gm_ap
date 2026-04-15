@@ -1,5 +1,29 @@
 if !util.IsBinaryModuleInstalled("gwsockets") then
-    error("Couldn't find GWSockets")
+    AddCSLuaFile("archipelago/cl/installerror.lua")
+    util.AddNetworkString("GMAPInstallErrorInfo")
+    local errormsg
+    local files = file.Find("bin/gmsv_gwsockets_*.dll","lsv")
+    if files[1] == nil then
+        errormsg = "notfound"
+    else
+        local is64 = jit.arch == "x64"
+        if system.IsWindows() then
+            if file.Exists("bin/gmsv_gwsockets_win"..(is64 and "32" or "64")..".dll","lsv") then
+                errormsg = "wrongarchwin"..(is64 and "64" or "32")
+            end
+        elseif system.IsLinux() then
+            if file.Exists("bin/gmsv_gwsockets_linux"..(is64 and "" or "64")..".dll","lsv") then
+                errormsg = "wrongarchwin"..(is64 and "64" or "32")
+            end
+        else
+            errormsg = "wrongos"
+        end
+    end
+    hook.Add("PlayerInitialSpawn","GMAPSendInstallError",function(ply)
+        net.Start("GMAPInstallErrorInfo")
+            net.WriteString(errormsg or "notfound")
+        net.Send(ply)
+    end)
 end
 
 --require("gwsockets") 

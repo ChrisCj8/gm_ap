@@ -23,6 +23,10 @@ net.Receive("APnotify", function(len)
     surface.PlaySound(sounds[type])
 end)
 
+net.Receive("GMAPInstallErrorInfo",function()
+    include("archipelago/cl/installerror.lua")
+end)
+
 include("archipelago/cl/slot_config.lua")
 
 -- old attempt to detect when the game is paused, no longer necessary since it now automatically reconnects whenever the connection is interrupted
