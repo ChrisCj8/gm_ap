@@ -18,6 +18,8 @@ local RoomBase = { -- this is also present in slotbase.lua which isn't great
     },
     DataStore = {},
     GiftBoxes = {},
+    SlotData = {},
+    LocationInfo = {},
 }
 
 function PR.RoomInfo( packet , slot )
@@ -25,12 +27,24 @@ function PR.RoomInfo( packet , slot )
     print("Received RoomInfo, GMOD and AP time difference: ", os.time() - packet.time )
     packet.cmd = nil
 
-    if GMAP.Rooms[slot.address].seed_name != packet.seed_name then
-        GMAP.Rooms[slot.address] = table.Copy(RoomBase)
-    end
-    table.Merge(GMAP.Rooms[slot.address],packet)
+    local room = GMAP.Rooms[slot.address]
+    local seed = packet.seed_name
 
-    slot.Room = GMAP.Rooms[slot.address]
+    if room.seed_name != seed then
+        GMAP.Rooms[slot.address] = table.Copy(RoomBase)
+        room = GMAP.Rooms[slot.address]
+        local cachefile = file.Read("archipelago/seedcache/"..seed..".json","DATA")
+        local seedcache = cachefile and util.JSONToTable(cachefile)
+        if seedcache then
+            room.SlotData = seedcache.SlotData
+            room.LocationInfo = seedcache.LocationInfo
+            room.SlotNameToID = seedcache.SlotNameToID
+        end
+    end
+
+    for k,v in pairs(packet) do room[k] = v end
+
+    slot.Room = room
 
     local gamename = slot.game
     local tags = {}
@@ -53,7 +67,7 @@ function PR.RoomInfo( packet , slot )
     local requestedDPs = {}
     local reqdpcount = 0
 
-    local datapack = slot.Room.DataPackage
+    local datapack = room.DataPackage
 
     if table.IsEmpty(datapack.games) then
         for k,v in pairs(packet.datapackage_checksums) do
@@ -87,6 +101,12 @@ function PR.RoomInfo( packet , slot )
         slot:PostDataPackageLoad(datapack)
     end
 
+    local slotnum = room.SlotNameToID and room.SlotNameToID[slot.slotName]
+    if slotnum then
+        local roomsd = room.SlotData
+        slot.slotData = roomsd[slotnum.t] and roomsd[slotnum.t][slotnum.s] or nil
+    end
+
     slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or '"password":"",')..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
 end
 
@@ -104,9 +124,12 @@ function PR.Connected( packet , slot )
     print("Received Connection Info")
     packet.cmd = nil
 
+    local room = slot.Room
+    local team, nr = packet.team, packet.slot
+
     if slot.game == "" then
         if table.HasValue(slot.tags,"TextOnly") == false then
-            slot.game = packet.slot_info[packet.slot].game
+            slot.game = packet.slot_info[nr].game
         end
     end
 
@@ -116,10 +139,21 @@ function PR.Connected( packet , slot )
         slot:OnLocationUpdate(k,v)
     end
 
-    slot.slotData = packet.slot_data or slot.slotData
-    slot.Nr = packet.slot
+    local sd = packet.slot_data
+    if sd then
+        slot.slotData = sd
+        local roomsd = room.SlotData
+        local teamsd = roomsd[team]
+        if teamsd then
+            teamsd[nr] = sd
+        else
+            roomsd[team] = {[nr] = sd}
+        end
+    end
+
+    slot.Nr = nr
     slot.hintPoints = packet.hint_points
-    slot.team = packet.team
+    slot.team = team
 
     local playertbl = {} -- same code is also run in RoomUpdate, consider turning this into a function
 
@@ -131,6 +165,14 @@ function PR.Connected( packet , slot )
         v.slot = nil
         playertbl[teamid] = playertbl[teamid] or {}
         playertbl[teamid][slotid] = v
+    end
+
+    if !room.SlotNameToID then
+        local tbl = {}
+        for k,v in ipairs(packet.players) do
+            tbl[v.name] = {t=v.team,s=v.slot}
+        end
+        room.SlotNameToID = tbl
     end
 
     slot.Room.Players = playertbl

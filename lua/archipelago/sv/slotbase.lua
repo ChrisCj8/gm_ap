@@ -11,6 +11,8 @@ local RoomBase = {
     },
     DataStore = {},
     GiftBoxes = {},
+    SlotData = {},
+    LocationInfo = {},
 }
 
 local PR = include("archipelago/sv/packetprocessor.lua")

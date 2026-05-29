@@ -44,6 +44,7 @@ if !file.IsDir("/archipelago/","DATA") then
 end
 
 include("archipelago/sv/dpmanagement.lua")
+include("archipelago/sv/seedmanage.lua")
 
 local cols = GMAP.Colors
 
