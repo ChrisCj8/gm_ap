@@ -235,41 +235,5 @@ hook.Add("ShutDown","apConfigSave", function()
     file.Write("archipelago/slotconfig.json",util.TableToJSON(GenerateConfigData()))
 end)
 
--- old attempt to detect when the game is paused, no longer necessary since it now automatically reconnects whenever the connection is interrupted
-
---[[
-GMAP.LastThink = GMAP.LastThink or -1
-GMAP.ThinkGap = 0
-GMAP.LastPause = -1
-
-hook.Add("Think","GMAP Pause Detector", function()
-    local curthink = os.time()
-    if GMAP.LastThink > 0 then
-        GMAP.ThinkGap = curthink - GMAP.LastThink
-        if GMAP.ThinkGap > 2 then
-            print("game was paused for "..GMAP.ThinkGap.." seconds")
-            GMAP.LastPause = CurTime()
-        end
-    end
-    GMAP.LastThink = curthink
-end)
-
-util.AddNetworkString("GMAP_PauseInfo")
-
-GMAP.PauseStart = 0
-GMAP.PauseLength = 0
-
-net.Receive("GMAP_PauseInfo", function(len,ply)
-    if net.ReadBool() then
-        print("game was paused")
-        GMAP.PauseStart = os.time()
-    else
-        GMAP.LastPause = CurTime()
-        GMAP.PauseLength = os.time() - GMAP.PauseStart
-        print("game was unpaused after "..GMAP.PauseLength.." seconds")
-    end
-end)
-]]
-
 include("archipelago/sv/tracking.lua")
 include("archipelago/sv/deathlink.lua")

@@ -28,20 +28,3 @@ net.Receive("GMAPInstallErrorInfo",function()
 end)
 
 include("archipelago/cl/slot_config.lua")
-
--- old attempt to detect when the game is paused, no longer necessary since it now automatically reconnects whenever the connection is interrupted
-
---[[
-if game.SinglePlayer() then
-    hook.Add("OnPauseMenuShow","GMAP Pause Detector",function()
-        net.Start("GMAP_PauseInfo")
-            net.WriteBool(true)
-        net.SendToServer()
-        timer.Simple(0, function()
-            net.Start("GMAP_PauseInfo")
-                net.WriteBool(false)
-            net.SendToServer()
-        end)
-    end)
-end
-]]
