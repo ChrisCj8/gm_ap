@@ -105,6 +105,8 @@ function PR.RoomInfo( packet , slot )
     if slotnum then
         local roomsd = room.SlotData
         slot.slotData = roomsd[slotnum.t] and roomsd[slotnum.t][slotnum.s] or nil
+    else
+        slot.slotData = nil
     end
 
     slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or '"password":"",')..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
@@ -122,7 +124,6 @@ end
 
 function PR.Connected( packet , slot )
     print("Received Connection Info")
-    packet.cmd = nil
 
     local room = slot.Room
     local team, nr = packet.team, packet.slot
@@ -158,11 +159,7 @@ function PR.Connected( packet , slot )
     local playertbl = {} -- same code is also run in RoomUpdate, consider turning this into a function
 
     for k,v in ipairs(packet.players) do
-        v.class = nil
-        local teamid = v.team
-        local slotid = v.slot
-        v.team = nil
-        v.slot = nil
+        local teamid, slotid = v.team, v.slot
         playertbl[teamid] = playertbl[teamid] or {}
         playertbl[teamid][slotid] = v
     end
@@ -176,10 +173,6 @@ function PR.Connected( packet , slot )
     end
 
     slot.Room.Players = playertbl
-
-    for k,v in pairs(packet.slot_info) do
-        v.class = nil
-    end
     slot.Room.SlotInfo = packet.slot_info
 
     slot.GetRequests = 0 -- used to attach a number to every get request we make so we can run a callback when we get a response
