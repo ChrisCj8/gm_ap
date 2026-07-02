@@ -331,7 +331,7 @@ function GMAP.NewSlot( inputTable )
         else
             if #inputTable.address < 6 then
                 local portnum = tonumber(inputTable.address)
-                if portnum != nil and 1023 < portnum < 65536 then
+                if portnum != nil and 1023 < portnum and portnum < 65536 then
                     portnum = math.Round(portnum,0) --rounding just in case
                     newSlot.address = "wss://archipelago.gg:"..inputTable.address
                 end
