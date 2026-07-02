@@ -1,9 +1,9 @@
 /*
     contains all functions responsible for processing the Packets the AP Server sends
 
-    the function names are the same as the names of the packet commands the server sends 
+    the function names are the same as the names of the packet commands the server sends
     (https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/network%20protocol.md#server---client),
-    when a message is received the code looks for a function with a name matching the 
+    when a message is received the code looks for a function with a name matching the
     command it received in the PacketProcessor table and calls it
 */
 
@@ -22,9 +22,9 @@ local RoomBase = { -- this is also present in slotbase.lua which isn't great
     LocationInfo = {},
 }
 
-function PR.RoomInfo( packet , slot )
+function PR.RoomInfo(packet,slot)
     slot.Socket.VoluntaryDC = false
-    print("Received RoomInfo, GMOD and AP time difference: ", os.time() - packet.time )
+    print("Received RoomInfo, GMOD and AP time difference: ",os.time()-packet.time)
     packet.cmd = nil
 
     local room = GMAP.Rooms[slot.address]
@@ -76,7 +76,7 @@ function PR.RoomInfo( packet , slot )
                 if file.Exists("archipelago/datapackages/"..k.."/"..v..".json","DATA") then
                     print("loading cached datapackage for "..k)
                     datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
-                    
+
                     gamedp = datapack.games[k]
 
                     gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
@@ -95,7 +95,6 @@ function PR.RoomInfo( packet , slot )
     local DPString = ""
 
     if reqdpcount > 0 then
-        --print("requesting DataPackages for: "..util.TableToJSON(requestedDPs))
         DPString = '{"cmd":"GetDataPackage","games":'..util.TableToJSON(requestedDPs)..'},'
     else
         slot:PostDataPackageLoad(datapack)
@@ -114,7 +113,7 @@ end
 
 ------------------ Connected
 
-local function ProcessLocations(oldLctns, val)
+local function ProcessLocations(oldLctns,val)
     local newLctns = {}
     for k,v in ipairs(oldLctns) do
         newLctns[v] = val
@@ -122,9 +121,7 @@ local function ProcessLocations(oldLctns, val)
     return newLctns
 end
 
-function PR.Connected( packet , slot )
-    print("Received Connection Info")
-
+function PR.Connected(packet,slot)
     local room = slot.Room
     local team, nr = packet.team, packet.slot
 
@@ -211,7 +208,7 @@ end
 
 ------------- ConnectionRefused
 
-function PR.ConnectionRefused( packet , slot )
+function PR.ConnectionRefused(packet,slot)
     slot.Socket.VoluntaryDC = true
     slot.Socket:close()
     GMAP.SendChatMessage("Connection Refused: "..util.TableToJSON(packet.errors),color_white,true)
@@ -222,7 +219,7 @@ end
 local ownslotcolor = GMAP.Colors.apmagenta
 local otherslotcolor = GMAP.Colors.apyellow
 
-function PR.PrintJSON( packet , slot )
+function PR.PrintJSON(packet,slot)
     if !slot.lastSentChat or !string.EndsWith( tostring(packet.data[1]["text"]) , slot.lastSentChat ) then -- does this still work?
         if slot.forwardAPchat == true then
             if packet.type == "Chat" then
@@ -266,7 +263,7 @@ end
 ----------------- ReceivedItems
 
 -- rearranges the data from the ReceivedItems Packet into a format that allows for faster lookups
-local function ProcessItems(oldItems) 
+local function ProcessItems(oldItems)
     local newItems = {}
     for k,v in ipairs(oldItems) do
         local ID = v.item
@@ -278,8 +275,7 @@ local function ProcessItems(oldItems)
     return newItems
 end
 
-function PR.ReceivedItems( packet , slot )
-    --print(packet.index, slot.lastItemIndex)
+function PR.ReceivedItems(packet,slot)
     if packet.index == 0 then
         slot.Items = ProcessItems(packet.items)
         for k,v in pairs(slot.Items) do
@@ -296,12 +292,9 @@ function PR.ReceivedItems( packet , slot )
             trackertbl = nil
         end
         for k, v in pairs(newItems) do
-            print(k,v)
             if slot.Items[k] != nil then
-                --PrintTable(slot.Items[k])
                 table.Add(slot.Items[k],newItems[k])
             else
-                --print("itemsprocessed is nil")
                 slot.Items[k] = newItems[k]
             end
             slot:OnItemUpdate(k,slot.Items[k])
@@ -318,9 +311,7 @@ end
 
 -------------------- DataPackage
 
-function PR.DataPackage( packet , slot )
-    print("Received DataPackage")
-
+function PR.DataPackage(packet,slot)
     for k,v in pairs(packet.data.games) do
         if !file.IsDir("/archipelago/datapackages/"..k.."/","DATA") then
             file.CreateDir("archipelago/datapackages/"..k)
@@ -335,29 +326,28 @@ function PR.DataPackage( packet , slot )
 
     table.Merge(slot.Room.DataPackage, packet.data)
     slot:PostDataPackageLoad(slot.Room.DataPackage)
-end 
+end
 
 -------------------- Bounced
 
-function PR.Bounced( packet , slot )
-    print("Received Bounce Package for "..slot.ID)
+function PR.Bounced(packet,slot)
     if istable(packet.tags) then
         local newtags = {}
-        for k,v in ipairs(packet.tags) do 
+        for k,v in ipairs(packet.tags) do
             newtags[v] = true
         end
         packet.tags = newtags
     end
     if istable(packet.games) then
         local newgames = {}
-        for k,v in ipairs(packet.games) do 
+        for k,v in ipairs(packet.games) do
             newgames[v] = true
         end
         packet.games = newgames
     end
     if istable(packet.slots) then
         local newslots = {}
-        for k,v in ipairs(packet.slots) do 
+        for k,v in ipairs(packet.slots) do
             newslots[v] = true
         end
         packet.slots = newslots
@@ -366,14 +356,11 @@ function PR.Bounced( packet , slot )
     if hkrtrn != nil then
         hkrtrn = hook.Run("AP_Bounced_"..slot.ID,packet)
     end
-    PrintTable(packet)
-end 
+end
 
 --------------------- RoomUpdate
 
-function PR.RoomUpdate( packet, slot )
-    print("Received RoomUpdate")
-    PrintTable(packet)
+function PR.RoomUpdate(packet,slot)
     if packet.checked_locations != nil then
         for k,v in ipairs(packet.checked_locations) do
             if slot.Locations[v] != true then
@@ -423,9 +410,7 @@ local function DSHandler(slot, key, value)
     GMAP.RunTrackers(slot.ID,"dstore",key)
 end
 
-function PR.Retrieved( packet, slot )
-    print("Received Retrieved Package for "..slot.ID)
-    PrintTable(packet)
+function PR.Retrieved(packet,slot)
     local store = true
     local cb = slot.GetCBs[packet.reqid]
     if isfunction(cb) then
@@ -438,14 +423,13 @@ function PR.Retrieved( packet, slot )
     for k,v in pairs(packet.keys) do
         DSHandler(slot,k,v)
     end
-end 
+end
 
 ------------ SetReply
 
-function PR.SetReply( packet, slot )
-    print("Received SetReply Package for "..slot.ID)
+function PR.SetReply(packet,slot)
     local reqid = packet.reqid
-    local cbtbl = slot.GetCBs 
+    local cbtbl = slot.GetCBs
     if reqid and isfunction(cbtbl[reqid]) then
         cbtbl[reqid](packet)
         cbtbl[reqid] = nil
@@ -456,18 +440,18 @@ end
 
 ------------ InvalidPacket
 
-function PR.InvalidPacket( packet, slot )
+function PR.InvalidPacket(packet,slot)
     print("Received InvalidPacket Packet")
     ErrorNoHalt("Invalid Packet sent to server: "..packet.text.."\n")
 end
 
-setmetatable(PR, {
-  __index = function( self , key )
-    return function(packet, slot)
-        ErrorNoHalt("Received Unhandled Package Type "..packet.cmd.." for "..slot.ID.."\n" )
-        PrintTable(packet)
+setmetatable(PR,{
+    __index = function(self,key)
+        return function(packet,slot)
+            ErrorNoHalt("Received Unhandled Package Type "..packet.cmd.." for "..slot.ID.."\n")
+            PrintTable(packet)
+        end
     end
-  end
 })
 
 return PR

@@ -1,4 +1,4 @@
-require("gwsockets") 
+require("gwsockets")
 
 local reconnectCVAR = CreateConVar("sv_gmap_max_reconnects",3,FCVAR_ARCHIVE,"How many times a slot should attempt to reestablish a connection after losing it.",0)
 local FromJSON = util.JSONToTable
@@ -165,7 +165,6 @@ function APslotBase:SendLocation(lctn,nodebug)
     end
     if isstring(lctn) then
         lctn = self.Room.DataPackage.games[self.game].location_name_to_id[lctn]
-        print("lctnprint",lctn)
     end
     if isnumber(lctn) then
         if self.Locations[lctn] == false then

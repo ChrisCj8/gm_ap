@@ -26,7 +26,7 @@ if !util.IsBinaryModuleInstalled("gwsockets") then
     end)
 end
 
---require("gwsockets") 
+--require("gwsockets")
 
 AddCSLuaFile("archipelago/cl/slot_config.lua")
 
@@ -89,7 +89,6 @@ function GMAP.SendChatMessage(txt,clr,last)
         net.WriteColor(clr,false)
         net.WriteString(txt)
         net.WriteBool(last)
-        --print((net.BytesWritten()).." bytes")
     net.Broadcast()
 end
 
@@ -108,7 +107,7 @@ end
 local function GenerateConfigData()
     local ConfigData = {}
     for k,v in pairs(GMAP.Registered) do
-        if !v.dontStore then 
+        if !v.dontStore then
             local data = {}
             local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
             for ik,iv in ipairs(CopyFields) do
