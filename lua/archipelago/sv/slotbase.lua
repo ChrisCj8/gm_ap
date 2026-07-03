@@ -42,6 +42,7 @@ local SocketBase = {
             GMAP.Connected[ownerID] = nil
             owner.Connected = false
             owner.FullData = false
+            owner.DPLoaded = false
             GMAP.ChatReaders[ownerID] = nil
 
             local reconnect = false
