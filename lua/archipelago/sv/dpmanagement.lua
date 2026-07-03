@@ -24,9 +24,10 @@ function GMAP.DPCleanup()
                     file.Delete("archipelago/datapackages/"..k.."/"..ik..".json")
                     v[ik] = nil
                 end
-                if #file.Find("archipelago/datapackages/"..k.."/*","DATA") == 0 then
-                    file.Delete("archipelago/datapackages/"..k.."/")
-                end
+            end
+            local files = file.Find("archipelago/datapackages/"..k.."/*","DATA")
+            if files and !files[1] then
+                file.Delete("archipelago/datapackages/"..k.."/")
             end
             if !next(v) then
                 GMAP.DataPackageRegister[k] = nil
