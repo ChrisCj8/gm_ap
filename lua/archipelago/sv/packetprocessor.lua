@@ -19,7 +19,6 @@ local RoomBase = { -- this is also present in slotbase.lua which isn't great
     DataStore = {},
     GiftBoxes = {},
     SlotData = {},
-    LocationInfo = {},
 }
 
 function PR.RoomInfo(packet,slot)
@@ -37,7 +36,7 @@ function PR.RoomInfo(packet,slot)
         local seedcache = cachefile and util.JSONToTable(cachefile)
         if seedcache then
             room.SlotData = seedcache.SlotData
-            room.LocationInfo = seedcache.LocationInfo
+            room.LocationInfo = seedcache.Locs
             room.SlotNameToID = seedcache.SlotNameToID
         end
     end
@@ -159,6 +158,21 @@ function PR.Connected(packet,slot)
         local teamid, slotid = v.team, v.slot
         playertbl[teamid] = playertbl[teamid] or {}
         playertbl[teamid][slotid] = v
+    end
+
+    if !room.LocationInfo then
+        local teamtbl = {}
+        for k,v in pairs(playertbl) do
+            local plytbl = {}
+            for ik,iv in pairs(v) do
+                plytbl[ik] = {}
+            end
+            teamtbl[k] = plytbl
+        end
+        room.LocationInfo = teamtbl
+        slot.LocationInfo = teamtbl[team][nr]
+    else
+        slot.LocationInfo = room.LocationInfo[team][nr]
     end
 
     if !room.SlotNameToID then
