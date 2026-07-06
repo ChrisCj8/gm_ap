@@ -150,7 +150,7 @@ function APslotBase:DCHandler()
 end
 
 function APslotBase:SendChatMessage(txt)
-    self.Socket:write('[{"cmd":"Say","text":"'..tostring(txt)..'"}]')
+    self.Socket:write('[{"cmd":"Say","text":"'..string.JavascriptSafe(tostring(txt))..'"}]')
     self.lastSentChat = txt
 end
 
