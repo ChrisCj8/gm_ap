@@ -11,16 +11,6 @@ local PR = {}
 
 ----------------- RoomInfo
 
-local RoomBase = { -- this is also present in slotbase.lua which isn't great
-    Members = {},
-    DataPackage = {
-        games = {}
-    },
-    DataStore = {},
-    GiftBoxes = {},
-    SlotData = {},
-}
-
 function PR.RoomInfo(packet,slot)
     slot.Socket.VoluntaryDC = false
     print("Received RoomInfo, GMOD and AP time difference: ",os.time()-packet.time)
@@ -30,7 +20,7 @@ function PR.RoomInfo(packet,slot)
     local seed = packet.seed_name
 
     if room.seed_name != seed then
-        GMAP.Rooms[slot.address] = table.Copy(RoomBase)
+        GMAP.Rooms[slot.address] = GMAP.CreateRoomTable()
         room = GMAP.Rooms[slot.address]
         local cachefile = file.Read("archipelago/seedcache/"..seed..".json","DATA")
         local seedcache = cachefile and util.JSONToTable(cachefile)

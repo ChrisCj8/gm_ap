@@ -4,15 +4,17 @@ local reconnectCVAR = CreateConVar("sv_gmap_max_reconnects",3,FCVAR_ARCHIVE,"How
 local FromJSON = util.JSONToTable
 local ToJSON = util.TableToJSON
 
-local RoomBase = {
-    Members = {},
-    DataPackage = {
-        games = {}
-    },
-    DataStore = {},
-    GiftBoxes = {},
-    SlotData = {},
-}
+function GMAP.CreateRoomTable()
+    return {
+        Members = {},
+        DataPackage = {
+            games = {}
+        },
+        DataStore = {},
+        GiftBoxes = {},
+        SlotData = {},
+    }
+end
 
 local PR = include("archipelago/sv/packetprocessor.lua")
 
@@ -117,7 +119,7 @@ function APslotBase:Connect()
             sock.Address = address
             sock.ReconnectAttempts = 0
         end
-        GMAP.Rooms[address] = GMAP.Rooms[address] or table.Copy(RoomBase)
+        GMAP.Rooms[address] = GMAP.Rooms[address] or GMAP.CreateRoomTable()
         self.Room = GMAP.Rooms[address]
         self.Room.Members[self.ID] = true
         local sock = self.Socket
