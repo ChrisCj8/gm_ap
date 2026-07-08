@@ -178,6 +178,7 @@ function PR.Connected(packet,slot)
 
     slot.GetRequests = 0 -- used to attach a number to every get request we make so we can run a callback when we get a response
     slot.GetCBs = {}
+    slot.ScoutCBs = {}
 
     slot:ConnectHandler()
     print("running ".."AP_"..slot.ID.."_LocationListUpdate")
@@ -440,6 +441,24 @@ function PR.SetReply(packet,slot)
     end
 
     DSHandler(slot,packet.key,packet.value)
+end
+
+------------ LocationInfo
+
+function PR.LocationInfo(packet,slot)
+    local locs = packet.locations
+    local CBs = slot.ScoutCBs
+    local locinfo = slot.LocationInfo
+
+    for k,v in ipairs(locs) do
+        v.class = nil
+        local cbs = CBs[v.location]
+        if cbs then
+            for _,f in ipairs(cbs) do f(v) end
+            CBs[v.location] = nil
+        end
+        locinfo[v.location] = v
+    end
 end
 
 ------------ InvalidPacket

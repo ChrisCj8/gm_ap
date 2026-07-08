@@ -44,7 +44,7 @@ local SocketBase = {
             owner.Connected = false
             owner.FullData = false
             owner.DPLoaded = false
-            owner.GetCBs = {}
+            owner.GetCBs, owner.ScoutCBs = {},{}
             GMAP.ChatReaders[ownerID] = nil
 
             local reconnect = false
@@ -295,6 +295,35 @@ end
 
 function APslotBase:SendDeathLink(cause,nameoverride)
     self.Socket:write('[{"cmd":"Bounce","tags":["DeathLink"],"data":{"time":'..os.time()..',"source":"'..(nameoverride or self.ID)..'","cause":"'..cause..'"}}]')
+end
+
+function APslotBase:GetLocationInfo(lctn,hint,cb)
+    if isstring(lctn) then
+        lctn = self.location_name_to_id[lctn]
+    end
+    if !isnumber(lctn) then
+        ErrorNoHalt("Invalid Location passed to GetLocationInfo")
+    end
+    hint = hint or 0
+    if !isnumber(hint) then
+        error("Invalid Value used for Hint Parameter in GetLocationInfo")
+    end
+    if self.Locations[lctn] == nil then
+        error("Tried to request Location Info for non-existant Location "..lctn.." ("..(self.LocalDP.location_id_to_name[lctn] or "No ID match found")..")")
+    end
+    if isfunction(cb) then
+        local scoutcbtbl = self.ScoutCBs[lctn]
+        if !scoutcbtbl then
+            self.ScoutCBs[lctn] = {cb}
+        else
+            scoutcbtbl[#scoutcbtbl+1] = cb
+        end
+    end
+    if hint == 0 then
+        local cachedinfo = self.LocationInfo[lctn]
+        if cachedinfo then cb(cachedinfo) return end
+    end
+    self.Socket:write('[{"cmd":"LocationScouts","create_as_hint":'..tostring(hint)..',"locations":['..tostring(lctn)..']}]')
 end
 
 function APslotBase:OnItemUpdate(id,itemlist) end
