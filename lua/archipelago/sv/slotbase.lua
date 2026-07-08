@@ -44,6 +44,7 @@ local SocketBase = {
             owner.Connected = false
             owner.FullData = false
             owner.DPLoaded = false
+            owner.GetCBs = {}
             GMAP.ChatReaders[ownerID] = nil
 
             local reconnect = false
