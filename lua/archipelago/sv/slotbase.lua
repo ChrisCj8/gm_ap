@@ -166,7 +166,7 @@ function APslotBase:SendLocation(lctn,nodebug)
         return
     end
     if isstring(lctn) then
-        lctn = self.Room.DataPackage.games[self.game].location_name_to_id[lctn]
+        lctn = self.location_name_to_id[lctn]
     end
     if isnumber(lctn) then
         if self.Locations[lctn] == false then
@@ -302,6 +302,13 @@ function APslotBase:OnLocationUpdate(id,state) end
 
 function APslotBase:PostDataPackageLoad(dp)
     self.DPLoaded = true
+    local localdp = dp.games[self.game]
+    self.location_name_to_id = localdp.location_name_to_id
+    self.location_id_to_name = localdp.location_id_to_name
+    self.item_name_to_id = localdp.item_name_to_id
+    self.item_id_to_name = localdp.item_id_to_name
+    self.location_name_groups = localdp.location_name_groups
+    self.item_name_groups = localdp.item_name_groups
     self:OnDataPackageLoad(dp)
     self:CheckFullData()
 end
