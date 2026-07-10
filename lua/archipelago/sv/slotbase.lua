@@ -138,11 +138,9 @@ function APslotBase:Connect()
 end
 
 function APslotBase:Disconnect()
+    self.Socket.VoluntaryDC = true
     if self.Socket:isConnected() then
-        self.Socket.VoluntaryDC = true
         self.Socket:close()
-    else
-        print("already disconnected")
     end
 end
 
