@@ -44,6 +44,10 @@ local SocketBase = {
             owner.Connected = false
             owner.FullData = false
             owner.DPLoaded = false
+            for k,v in pairs(owner.GetCBs) do v() end
+            for k,v in pairs(owner.ScoutCBs) do
+                for ik,iv in ipairs(v) do iv() end
+            end
             owner.GetCBs, owner.ScoutCBs = {},{}
             GMAP.ChatReaders[ownerID] = nil
 
