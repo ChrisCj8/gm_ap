@@ -1,0 +1,3 @@
+SpriteCard {
+    $basetexture "archipelago/trap.vtf"
+}
