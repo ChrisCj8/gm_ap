@@ -311,7 +311,7 @@ function APslotBase:GetLocationInfo(lctn,hint,cb)
         error("Invalid Value used for Hint Parameter in GetLocationInfo")
     end
     if self.Locations[lctn] == nil then
-        error("Tried to request Location Info for non-existant Location "..lctn.." ("..(self.LocalDP.location_id_to_name[lctn] or "No ID match found")..")")
+        error("Tried to request Location Info for non-existant Location "..lctn.." ("..(self.location_id_to_name[lctn] or "No ID match found")..")")
     end
     if isfunction(cb) then
         local scoutcbtbl = self.ScoutCBs[lctn]
