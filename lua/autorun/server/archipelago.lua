@@ -13,7 +13,7 @@ if !util.IsBinaryModuleInstalled("gwsockets") then
             end
         elseif system.IsLinux() then
             if file.Exists("bin/gmsv_gwsockets_linux"..(is64 and "" or "64")..".dll","lsv") then
-                errormsg = "wrongarchwin"..(is64 and "64" or "32")
+                errormsg = "wrongarchlinux"..(is64 and "64" or "32")
             end
         else
             errormsg = "wrongos"
