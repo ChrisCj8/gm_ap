@@ -11,13 +11,15 @@ if !util.IsBinaryModuleInstalled("gwsockets") then
             if file.Exists("bin/gmsv_gwsockets_win"..(is64 and "32" or "64")..".dll","lsv") then
                 errormsg = "wrongarchwin"..(is64 and "64" or "32")
             end
+			if file.Find("bin/gmsv_gwsockets_linux*.dll","lsv")[1] != nil then
+				errormsg = "wrongosproton"
+			end
         elseif system.IsLinux() then
             if file.Exists("bin/gmsv_gwsockets_linux"..(is64 and "" or "64")..".dll","lsv") then
                 errormsg = "wrongarchlinux"..(is64 and "64" or "32")
-            end
-        else
-            errormsg = "wrongos"
+			end
         end
+		if !errormsg then errormsg = "wrongos" end
     end
     hook.Add("PlayerInitialSpawn","GMAPSendInstallError",function(ply)
         net.Start("GMAPInstallErrorInfo")
@@ -25,8 +27,6 @@ if !util.IsBinaryModuleInstalled("gwsockets") then
         net.Send(ply)
     end)
 end
-
---require("gwsockets")
 
 AddCSLuaFile("archipelago/cl/slot_config.lua")
 
