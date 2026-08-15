@@ -105,10 +105,7 @@ local SocketBase = {
 table.Merge(SocketBase, FindMetaTable("WebSocket")) -- i feel like there's probably a better way do this but i've spent too much time on this
 --setmetatable(SocketBase, FindMetaTable("WebSocket"))
 
-local APslotBase = {
-    Items = {},
-    tags = {}
-}
+local APslotBase = {}
 
 function APslotBase:Connect()
     if self.Socket != nil and self.Socket:isConnected() then
@@ -365,7 +362,12 @@ function GMAP.NewSlot( inputTable )
     if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then
         print("Slot with same ID or Name already connected")
     else
-        local newSlot = {}
+		local newSlot = {
+			Items = {},
+			tags = {},
+			GetCBs = {},
+			ScoutCBs = {},
+		}
 
         setmetatable(newSlot, {__index = APslotBase})
 
