@@ -28,6 +28,9 @@ local SocketBase = {
         onError =  function(self,err)
             GMAP.SendChatMessage(self.OwnerID.." Socket Error:",color_white,true)
             GMAP.SendChatMessage(err,color_white,true)
+			if err == "Connection failed: wrong version number" then
+				GMAP.SendChatMessage("#gmap.connectionerror.wrongverscheme",color_white,true)
+			end
         end,
         onConnected = function(self)
             local ownerID = self.OwnerID
