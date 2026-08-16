@@ -82,14 +82,24 @@ hook.Add("PlayerSay","APChatReader", function( ply, text )
     end
 end)
 
+local lastcol
 function GMAP.SendChatMessage(txt,clr,last)
     txt = txt or "empty"
-    --clr = clr or color_white
     net.Start("APmessage")
-        net.WriteColor(clr,false)
+		if clr != lastcol then
+			net.WriteBool(true)
+			net.WriteColor(clr,false)
+		else
+			net.WriteBool(false)
+		end
         net.WriteString(txt)
         net.WriteBool(last)
     net.Broadcast()
+	if last then
+		lastcol = nil
+	else
+		if clr != lastcol then lastcol = clr end
+	end
 end
 
 function GMAP.SendNotify(txt,type,time,ply)

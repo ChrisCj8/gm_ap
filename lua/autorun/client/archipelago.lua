@@ -3,7 +3,12 @@ list.Set( "ContentCategoryIcons", "Archipelago", "archipelago/ap16.png" )
 local APMessageTable = {}
 
 net.Receive("APmessage", function(len)
-    table.Add(APMessageTable,{net.ReadColor(false),net.ReadString()})
+	if net.ReadBool() then
+		APMessageTable[#APMessageTable+1] = net.ReadColor(false)
+	end
+	local txt = net.ReadString()
+	if txt[1] == "#" then txt = language.GetPhrase(txt) end
+	APMessageTable[#APMessageTable+1] = txt
     if net.ReadBool() then
         chat.AddText(unpack(APMessageTable))
         APMessageTable = {}
