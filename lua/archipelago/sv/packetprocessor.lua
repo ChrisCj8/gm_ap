@@ -1,10 +1,10 @@
 /*
-    contains all functions responsible for processing the Packets the AP Server sends
+	contains all functions responsible for processing the Packets the AP Server sends
 
-    the function names are the same as the names of the packet commands the server sends
-    (https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/network%20protocol.md#server---client),
-    when a message is received the code looks for a function with a name matching the
-    command it received in the PacketProcessor table and calls it
+	the function names are the same as the names of the packet commands the server sends
+	(https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/network%20protocol.md#server---client),
+	when a message is received the code looks for a function with a name matching the
+	command it received in the PacketProcessor table and calls it
 */
 
 local PR = {}
@@ -12,209 +12,209 @@ local PR = {}
 ----------------- RoomInfo
 
 function PR.RoomInfo(packet,slot)
-    slot.Socket.VoluntaryDC = false
-    print("Received RoomInfo, GMOD and AP time difference: ",os.time()-packet.time)
-    packet.cmd = nil
+	slot.Socket.VoluntaryDC = false
+	print("Received RoomInfo, GMOD and AP time difference: ",os.time()-packet.time)
+	packet.cmd = nil
 
-    local room = GMAP.Rooms[slot.address]
-    local seed = packet.seed_name
+	local room = GMAP.Rooms[slot.address]
+	local seed = packet.seed_name
 
-    if room.seed_name != seed then
-        GMAP.Rooms[slot.address] = GMAP.CreateRoomTable()
-        room = GMAP.Rooms[slot.address]
-        local cachefile = file.Read("archipelago/seedcache/"..seed..".json","DATA")
-        local seedcache = cachefile and util.JSONToTable(cachefile)
-        if seedcache then
-            room.SlotData = seedcache.SlotData
-            room.LocationInfo = seedcache.Locs
-            room.SlotNameToID = seedcache.SlotNameToID
-        end
-    end
+	if room.seed_name != seed then
+		GMAP.Rooms[slot.address] = GMAP.CreateRoomTable()
+		room = GMAP.Rooms[slot.address]
+		local cachefile = file.Read("archipelago/seedcache/"..seed..".json","DATA")
+		local seedcache = cachefile and util.JSONToTable(cachefile)
+		if seedcache then
+			room.SlotData = seedcache.SlotData
+			room.LocationInfo = seedcache.Locs
+			room.SlotNameToID = seedcache.SlotNameToID
+		end
+	end
 
-    for k,v in pairs(packet) do room[k] = v end
+	for k,v in pairs(packet) do room[k] = v end
 
-    slot.Room = room
+	slot.Room = room
 
-    local gamename = slot.game
-    local tags = {}
-    local tagnr = 0
-    if slot.receiveAPchat == false then
-        tagnr = tagnr + 1
-        tags[tagnr] = "NoText"
-    end
-    slot.cantSendLocations = nil
-    if slot.textOnly == true or gamename == "" then
-        tagnr = tagnr + 1
-        tags[tagnr] = "TextOnly"
-        slot.cantSendLocations = true
-    end
-    if slot.deathlink == true then
-        tagnr = tagnr + 1
-        tags[tagnr] = "DeathLink"
-    end
+	local gamename = slot.game
+	local tags = {}
+	local tagnr = 0
+	if slot.receiveAPchat == false then
+		tagnr = tagnr + 1
+		tags[tagnr] = "NoText"
+	end
+	slot.cantSendLocations = nil
+	if slot.textOnly == true or gamename == "" then
+		tagnr = tagnr + 1
+		tags[tagnr] = "TextOnly"
+		slot.cantSendLocations = true
+	end
+	if slot.deathlink == true then
+		tagnr = tagnr + 1
+		tags[tagnr] = "DeathLink"
+	end
 
-    local requestedDPs = {}
-    local reqdpcount = 0
+	local requestedDPs = {}
+	local reqdpcount = 0
 
-    local datapack = room.DataPackage
+	local datapack = room.DataPackage
 
-    if table.IsEmpty(datapack.games) then
-        for k,v in pairs(packet.datapackage_checksums) do
-            local gamedp = datapack.games[k]
-            if !gamedp or gamedp.checksum != k then
-                if file.Exists("archipelago/datapackages/"..k.."/"..v..".json","DATA") then
-                    print("loading cached datapackage for "..k)
-                    datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
+	if table.IsEmpty(datapack.games) then
+		for k,v in pairs(packet.datapackage_checksums) do
+			local gamedp = datapack.games[k]
+			if !gamedp or gamedp.checksum != k then
+				if file.Exists("archipelago/datapackages/"..k.."/"..v..".json","DATA") then
+					print("loading cached datapackage for "..k)
+					datapack.games[k] = util.JSONToTable(file.Read("archipelago/datapackages/"..k.."/"..v..".json","DATA"))
 
-                    gamedp = datapack.games[k]
+					gamedp = datapack.games[k]
 
-                    gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
-                    gamedp.item_id_to_name = table.Flip(gamedp.item_name_to_id)
+					gamedp.location_id_to_name = table.Flip(gamedp.location_name_to_id)
+					gamedp.item_id_to_name = table.Flip(gamedp.item_name_to_id)
 
-                    GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
-                    GMAP.DataPackageRegister[k][v] = os.time()
-                else
-                    reqdpcount = reqdpcount + 1
-                    requestedDPs[reqdpcount] = k
-                end
-            end
-        end
-    end
+					GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
+					GMAP.DataPackageRegister[k][v] = os.time()
+				else
+					reqdpcount = reqdpcount + 1
+					requestedDPs[reqdpcount] = k
+				end
+			end
+		end
+	end
 
-    local DPString = ""
+	local DPString = ""
 
-    if reqdpcount > 0 then
-        DPString = '{"cmd":"GetDataPackage","games":'..util.TableToJSON(requestedDPs)..'},'
-    else
-        slot:PostDataPackageLoad(datapack)
-    end
+	if reqdpcount > 0 then
+		DPString = '{"cmd":"GetDataPackage","games":'..util.TableToJSON(requestedDPs)..'},'
+	else
+		slot:PostDataPackageLoad(datapack)
+	end
 
-    local slotnum = room.SlotNameToID and room.SlotNameToID[slot.slotName]
-    if slotnum then
-        local roomsd = room.SlotData
-        slot.slotData = roomsd[slotnum.t] and roomsd[slotnum.t][slotnum.s] or nil
-    else
-        slot.slotData = nil
-    end
+	local slotnum = room.SlotNameToID and room.SlotNameToID[slot.slotName]
+	if slotnum then
+		local roomsd = room.SlotData
+		slot.slotData = roomsd[slotnum.t] and roomsd[slotnum.t][slotnum.s] or nil
+	else
+		slot.slotData = nil
+	end
 
-    slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or '"password":"",')..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
+	slot.Socket:write('['..DPString..'{"cmd":"Connect","name":"'..slot.slotName..'","game":"'..gamename..'",'..(packet.password and '"password":"'..slot.password..'",' or '"password":"",')..'"slot_data":'..tostring(slot.slotData == nil)..',"items_handling":7,"uuid":"","tags":'..util.TableToJSON(tags)..',"version":{"major":0,"minor":6,"build":1,"class":"Version"}}]')
 end
 
 ------------------ Connected
 
 local function ProcessLocations(oldLctns,val)
-    local newLctns = {}
-    for k,v in ipairs(oldLctns) do
-        newLctns[v] = val
-    end
-    return newLctns
+	local newLctns = {}
+	for k,v in ipairs(oldLctns) do
+		newLctns[v] = val
+	end
+	return newLctns
 end
 
 function PR.Connected(packet,slot)
-    local room = slot.Room
-    local team, nr = packet.team, packet.slot
+	local room = slot.Room
+	local team, nr = packet.team, packet.slot
 
-    if slot.game == "" then
-        if table.HasValue(slot.tags,"TextOnly") == false then
-            slot.game = packet.slot_info[nr].game
-        end
-    end
+	if slot.game == "" then
+		if table.HasValue(slot.tags,"TextOnly") == false then
+			slot.game = packet.slot_info[nr].game
+		end
+	end
 
-    slot.Locations = table.Merge(ProcessLocations(packet.missing_locations,false),ProcessLocations(packet.checked_locations,true))
-    for k,v in pairs(slot.Locations) do
-        GMAP.RunTrackers(slot.ID,"lctn",k)
-        slot:OnLocationUpdate(k,v)
-    end
+	slot.Locations = table.Merge(ProcessLocations(packet.missing_locations,false),ProcessLocations(packet.checked_locations,true))
+	for k,v in pairs(slot.Locations) do
+		GMAP.RunTrackers(slot.ID,"lctn",k)
+		slot:OnLocationUpdate(k,v)
+	end
 
-    local sd = packet.slot_data
-    if sd then
-        slot.slotData = sd
-        local roomsd = room.SlotData
-        local teamsd = roomsd[team]
-        if teamsd then
-            teamsd[nr] = sd
-        else
-            roomsd[team] = {[nr] = sd}
-        end
-    end
+	local sd = packet.slot_data
+	if sd then
+		slot.slotData = sd
+		local roomsd = room.SlotData
+		local teamsd = roomsd[team]
+		if teamsd then
+			teamsd[nr] = sd
+		else
+			roomsd[team] = {[nr] = sd}
+		end
+	end
 
-    slot.Nr = nr
-    slot.hintPoints = packet.hint_points
-    slot.team = team
+	slot.Nr = nr
+	slot.hintPoints = packet.hint_points
+	slot.team = team
 
-    local playertbl = {} -- same code is also run in RoomUpdate, consider turning this into a function
+	local playertbl = {} -- same code is also run in RoomUpdate, consider turning this into a function
 
-    for k,v in ipairs(packet.players) do
-        local teamid, slotid = v.team, v.slot
-        playertbl[teamid] = playertbl[teamid] or {}
-        playertbl[teamid][slotid] = v
-    end
+	for k,v in ipairs(packet.players) do
+		local teamid, slotid = v.team, v.slot
+		playertbl[teamid] = playertbl[teamid] or {}
+		playertbl[teamid][slotid] = v
+	end
 
-    if !room.LocationInfo then
-        local teamtbl = {}
-        for k,v in pairs(playertbl) do
-            local plytbl = {}
-            for ik,iv in pairs(v) do
-                plytbl[ik] = {}
-            end
-            teamtbl[k] = plytbl
-        end
-        room.LocationInfo = teamtbl
-        slot.LocationInfo = teamtbl[team][nr]
-    else
-        slot.LocationInfo = room.LocationInfo[team][nr]
-    end
+	if !room.LocationInfo then
+		local teamtbl = {}
+		for k,v in pairs(playertbl) do
+			local plytbl = {}
+			for ik,iv in pairs(v) do
+				plytbl[ik] = {}
+			end
+			teamtbl[k] = plytbl
+		end
+		room.LocationInfo = teamtbl
+		slot.LocationInfo = teamtbl[team][nr]
+	else
+		slot.LocationInfo = room.LocationInfo[team][nr]
+	end
 
-    if !room.SlotNameToID then
-        local tbl = {}
-        for k,v in ipairs(packet.players) do
-            tbl[v.name] = {t=v.team,s=v.slot}
-        end
-        room.SlotNameToID = tbl
-    end
+	if !room.SlotNameToID then
+		local tbl = {}
+		for k,v in ipairs(packet.players) do
+			tbl[v.name] = {t=v.team,s=v.slot}
+		end
+		room.SlotNameToID = tbl
+	end
 
-    slot.Room.Players = playertbl
-    slot.Room.SlotInfo = packet.slot_info
+	slot.Room.Players = playertbl
+	slot.Room.SlotInfo = packet.slot_info
 
-    slot.GetRequests = 0 -- used to attach a number to every get request we make so we can run a callback when we get a response
+	slot.GetRequests = 0 -- used to attach a number to every get request we make so we can run a callback when we get a response
 
-    slot:ConnectHandler()
-    print("running ".."AP_"..slot.ID.."_LocationListUpdate")
-    hook.Run("AP_"..slot.ID.."_LocationListUpdate")
-    slot.Items = {}
-    print("running ".."AP_"..slot.ID.."_ItemListUpdate")
-    hook.Run("AP_"..slot.ID.."_ItemListUpdate")
-    slot.Socket:write('[{"cmd":"Sync"}]')
+	slot:ConnectHandler()
+	print("running ".."AP_"..slot.ID.."_LocationListUpdate")
+	hook.Run("AP_"..slot.ID.."_LocationListUpdate")
+	slot.Items = {}
+	print("running ".."AP_"..slot.ID.."_ItemListUpdate")
+	hook.Run("AP_"..slot.ID.."_ItemListUpdate")
+	slot.Socket:write('[{"cmd":"Sync"}]')
 
-    slot:CheckFullData()
+	slot:CheckFullData()
 
-    local giftboxkeys = {}
+	local giftboxkeys = {}
 
-    for k,v in pairs(playertbl) do
-        giftboxkeys[#giftboxkeys+1] = "GiftBoxes;"..k
-    end
-    local giftboxproto = {
-        [slot.Nr]={
-        is_open=true,
-        accepts_any_gift=true,
-        desired_traits={},
-        minimum_gift_data_version=3,
-        maximum_gift_data_version=3,
-    }}
-    --slot:DataStoreSet("GiftBoxes;"..slot.team,giftboxproto,true,{{operation="update",value=""}})
-    -- gmods json converter automatically converts empty tables to arrays instead of dictonaries so we need to prewrite the command for this
-    -- slot.Socket:write('[{"cmd":"Set","want_reply":true,"key":"GiftBox;'..slot.team..';'..slot.Nr..'","default":{},"operations":[{"operation":"default","value":{}}]}]')
-    --slot:DataStoreSet("GiftBox;"..slot.team..";"..slot.Nr,{},true,{{operation="default",value=""}})
-    --slot:DataStoreGet(giftboxkeys)
-    --slot:DataStoreSetNotify(giftboxkeys)
+	for k,v in pairs(playertbl) do
+		giftboxkeys[#giftboxkeys+1] = "GiftBoxes;"..k
+	end
+	local giftboxproto = {
+		[slot.Nr]={
+		is_open=true,
+		accepts_any_gift=true,
+		desired_traits={},
+		minimum_gift_data_version=3,
+		maximum_gift_data_version=3,
+	}}
+	--slot:DataStoreSet("GiftBoxes;"..slot.team,giftboxproto,true,{{operation="update",value=""}})
+	-- gmods json converter automatically converts empty tables to arrays instead of dictonaries so we need to prewrite the command for this
+	-- slot.Socket:write('[{"cmd":"Set","want_reply":true,"key":"GiftBox;'..slot.team..';'..slot.Nr..'","default":{},"operations":[{"operation":"default","value":{}}]}]')
+	--slot:DataStoreSet("GiftBox;"..slot.team..";"..slot.Nr,{},true,{{operation="default",value=""}})
+	--slot:DataStoreGet(giftboxkeys)
+	--slot:DataStoreSetNotify(giftboxkeys)
 end
 
 ------------- ConnectionRefused
 
 function PR.ConnectionRefused(packet,slot)
-    slot.Socket.VoluntaryDC = true
-    slot.Socket:close()
-    GMAP.SendChatMessage("Connection Refused: "..util.TableToJSON(packet.errors),color_white,true)
+	slot.Socket.VoluntaryDC = true
+	slot.Socket:close()
+	GMAP.SendChatMessage("Connection Refused: "..util.TableToJSON(packet.errors),color_white,true)
 end
 
 ------------- PrintJSON
@@ -223,256 +223,256 @@ local ownslotcolor = GMAP.Colors.apmagenta
 local otherslotcolor = GMAP.Colors.apyellow
 
 function PR.PrintJSON(packet,slot)
-    if !slot.lastSentChat or !string.EndsWith( tostring(packet.data[1]["text"]) , slot.lastSentChat ) then -- does this still work?
-        if slot.forwardAPchat == true then
-            if packet.type == "Chat" then
-                local num = packet.slot
-                local teamid = packet.team
-                local color = otherslotcolor
-                if num == slot.Nr then
-                    color = ownslotcolor
-                end
-                    GMAP.SendChatMessage(slot.Room.Players[teamid][num].alias,color,false)
-                    GMAP.SendChatMessage(": "..packet.message,color_white,true)
-            elseif packet.type == "ServerChat" then
-                GMAP.SendChatMessage("AP Server: ",color_white,false)
-                GMAP.SendChatMessage(packet.message,color_white,true)
-            else
-                for k,v in ipairs(packet.data) do
-                    if v.type == "item_id" then
-                        GMAP.SendChatMessage(slot.Room.DataPackage.games[slot.Room.SlotInfo[v.player].game].item_id_to_name[tonumber(v.text)],GMAP.ItemTypeColors[v.flags],false)
-                    elseif v.type == "location_id" then
-                        GMAP.SendChatMessage(slot.Room.DataPackage.games[slot.Room.SlotInfo[v.player].game].location_id_to_name[tonumber(v.text)],Color(128, 255, 191),false)
-                    elseif v.type == "player_id" then
-                        local num = tonumber(v.text)
-                        local color = otherslotcolor
-                        if num == slot.Nr then
-                            color = ownslotcolor
-                        end
-                        GMAP.SendChatMessage(slot.Room.Players[slot.team][num].alias,color,false)
-                    elseif v.type == "Goal" then
-                        GMAP.SendChatMessage(v.text,Color(255,255,0),false)
-                    else
-                        GMAP.SendChatMessage(v.text,color_white,false)
-                    end
-                end
-                GMAP.SendChatMessage("",color_white,true)
-            end
-        end
-        hook.Run("AP_"..slot.ID.."_ChatMessage",packet)
-    end
+	if !slot.lastSentChat or !string.EndsWith( tostring(packet.data[1]["text"]) , slot.lastSentChat ) then -- does this still work?
+		if slot.forwardAPchat == true then
+			if packet.type == "Chat" then
+				local num = packet.slot
+				local teamid = packet.team
+				local color = otherslotcolor
+				if num == slot.Nr then
+					color = ownslotcolor
+				end
+					GMAP.SendChatMessage(slot.Room.Players[teamid][num].alias,color,false)
+					GMAP.SendChatMessage(": "..packet.message,color_white,true)
+			elseif packet.type == "ServerChat" then
+				GMAP.SendChatMessage("AP Server: ",color_white,false)
+				GMAP.SendChatMessage(packet.message,color_white,true)
+			else
+				for k,v in ipairs(packet.data) do
+					if v.type == "item_id" then
+						GMAP.SendChatMessage(slot.Room.DataPackage.games[slot.Room.SlotInfo[v.player].game].item_id_to_name[tonumber(v.text)],GMAP.ItemTypeColors[v.flags],false)
+					elseif v.type == "location_id" then
+						GMAP.SendChatMessage(slot.Room.DataPackage.games[slot.Room.SlotInfo[v.player].game].location_id_to_name[tonumber(v.text)],Color(128, 255, 191),false)
+					elseif v.type == "player_id" then
+						local num = tonumber(v.text)
+						local color = otherslotcolor
+						if num == slot.Nr then
+							color = ownslotcolor
+						end
+						GMAP.SendChatMessage(slot.Room.Players[slot.team][num].alias,color,false)
+					elseif v.type == "Goal" then
+						GMAP.SendChatMessage(v.text,Color(255,255,0),false)
+					else
+						GMAP.SendChatMessage(v.text,color_white,false)
+					end
+				end
+				GMAP.SendChatMessage("",color_white,true)
+			end
+		end
+		hook.Run("AP_"..slot.ID.."_ChatMessage",packet)
+	end
 end
 
 ----------------- ReceivedItems
 
 -- rearranges the data from the ReceivedItems Packet into a format that allows for faster lookups
 local function ProcessItems(oldItems)
-    local newItems = {}
-    for k,v in ipairs(oldItems) do
-        local ID = v.item
-        newItems[ID] = newItems[ID] or {}
-        local listpos = #newItems[ID]+1
-        newItems[ID][listpos] = table.Copy(v)
-        newItems[ID][listpos].item , newItems[ID][listpos].class = nil
-    end
-    return newItems
+	local newItems = {}
+	for k,v in ipairs(oldItems) do
+		local ID = v.item
+		newItems[ID] = newItems[ID] or {}
+		local listpos = #newItems[ID]+1
+		newItems[ID][listpos] = table.Copy(v)
+		newItems[ID][listpos].item , newItems[ID][listpos].class = nil
+	end
+	return newItems
 end
 
 function PR.ReceivedItems(packet,slot)
-    if packet.index == 0 then
-        slot.Items = ProcessItems(packet.items)
-        for k,v in pairs(slot.Items) do
-            slot:OnItemUpdate(k,v)
-            GMAP.RunTrackers(slot.ID,"item",k)
-        end
-        hook.Run("AP_"..slot.ID.."_ItemListUpdate")
-    elseif packet.index == slot.lastItemIndex then
-        local newItems = ProcessItems(packet.items)
-        local trackertbl = {}
-        if GMAP.Trackers[slot.ID] != nil then
-            trackertbl = GMAP.Trackers[slot.ID].item
-        else
-            trackertbl = nil
-        end
-        for k, v in pairs(newItems) do
-            if slot.Items[k] != nil then
-                table.Add(slot.Items[k],newItems[k])
-            else
-                slot.Items[k] = newItems[k]
-            end
-            slot:OnItemUpdate(k,slot.Items[k])
-            GMAP.RunTrackers(slot.ID,"item",k)
-        end
-        hook.Run("AP_"..slot.ID.."_ItemListUpdate")
-    else
-        slot.Items = {} -- if the slot hasn't received any items yet the server won't send anything back so we have to clear the item lists out just in case
-        hook.Run("AP_"..slot.ID.."_ItemListUpdate") -- this also means we have to send out another itemlistupdate event, which might be followed up by another right after
-        slot.Socket:write('[{"cmd":"Sync"}]')
-    end
-    slot.lastItemIndex = packet.index + #packet.items
+	if packet.index == 0 then
+		slot.Items = ProcessItems(packet.items)
+		for k,v in pairs(slot.Items) do
+			slot:OnItemUpdate(k,v)
+			GMAP.RunTrackers(slot.ID,"item",k)
+		end
+		hook.Run("AP_"..slot.ID.."_ItemListUpdate")
+	elseif packet.index == slot.lastItemIndex then
+		local newItems = ProcessItems(packet.items)
+		local trackertbl = {}
+		if GMAP.Trackers[slot.ID] != nil then
+			trackertbl = GMAP.Trackers[slot.ID].item
+		else
+			trackertbl = nil
+		end
+		for k, v in pairs(newItems) do
+			if slot.Items[k] != nil then
+				table.Add(slot.Items[k],newItems[k])
+			else
+				slot.Items[k] = newItems[k]
+			end
+			slot:OnItemUpdate(k,slot.Items[k])
+			GMAP.RunTrackers(slot.ID,"item",k)
+		end
+		hook.Run("AP_"..slot.ID.."_ItemListUpdate")
+	else
+		slot.Items = {} -- if the slot hasn't received any items yet the server won't send anything back so we have to clear the item lists out just in case
+		hook.Run("AP_"..slot.ID.."_ItemListUpdate") -- this also means we have to send out another itemlistupdate event, which might be followed up by another right after
+		slot.Socket:write('[{"cmd":"Sync"}]')
+	end
+	slot.lastItemIndex = packet.index + #packet.items
 end
 
 -------------------- DataPackage
 
 function PR.DataPackage(packet,slot)
-    for k,v in pairs(packet.data.games) do
-        if !file.IsDir("/archipelago/datapackages/"..k.."/","DATA") then
-            file.CreateDir("archipelago/datapackages/"..k)
-        end
-        file.Write("archipelago/datapackages/"..k.."/"..v.checksum..".json",util.TableToJSON(v,true)) -- could set the prettyprint option in tabletojson to false later to save some space
-        v.location_id_to_name = table.Flip(v.location_name_to_id)
-        v.item_id_to_name = table.Flip(v.item_name_to_id)
+	for k,v in pairs(packet.data.games) do
+		if !file.IsDir("/archipelago/datapackages/"..k.."/","DATA") then
+			file.CreateDir("archipelago/datapackages/"..k)
+		end
+		file.Write("archipelago/datapackages/"..k.."/"..v.checksum..".json",util.TableToJSON(v,true)) -- could set the prettyprint option in tabletojson to false later to save some space
+		v.location_id_to_name = table.Flip(v.location_name_to_id)
+		v.item_id_to_name = table.Flip(v.item_name_to_id)
 
-        GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
-        GMAP.DataPackageRegister[k][v.checksum] = os.time()
-    end
+		GMAP.DataPackageRegister[k] = GMAP.DataPackageRegister[k] or {}
+		GMAP.DataPackageRegister[k][v.checksum] = os.time()
+	end
 
-    table.Merge(slot.Room.DataPackage, packet.data)
-    slot:PostDataPackageLoad(slot.Room.DataPackage)
+	table.Merge(slot.Room.DataPackage, packet.data)
+	slot:PostDataPackageLoad(slot.Room.DataPackage)
 end
 
 -------------------- Bounced
 
 function PR.Bounced(packet,slot)
-    if istable(packet.tags) then
-        local newtags = {}
-        for k,v in ipairs(packet.tags) do
-            newtags[v] = true
-        end
-        packet.tags = newtags
-    end
-    if istable(packet.games) then
-        local newgames = {}
-        for k,v in ipairs(packet.games) do
-            newgames[v] = true
-        end
-        packet.games = newgames
-    end
-    if istable(packet.slots) then
-        local newslots = {}
-        for k,v in ipairs(packet.slots) do
-            newslots[v] = true
-        end
-        packet.slots = newslots
-    end
-    local hkrtrn = hook.Run("AP_Bounced",slot,packet)
-    if hkrtrn != nil then
-        hkrtrn = hook.Run("AP_Bounced_"..slot.ID,packet)
-    end
+	if istable(packet.tags) then
+		local newtags = {}
+		for k,v in ipairs(packet.tags) do
+			newtags[v] = true
+		end
+		packet.tags = newtags
+	end
+	if istable(packet.games) then
+		local newgames = {}
+		for k,v in ipairs(packet.games) do
+			newgames[v] = true
+		end
+		packet.games = newgames
+	end
+	if istable(packet.slots) then
+		local newslots = {}
+		for k,v in ipairs(packet.slots) do
+			newslots[v] = true
+		end
+		packet.slots = newslots
+	end
+	local hkrtrn = hook.Run("AP_Bounced",slot,packet)
+	if hkrtrn != nil then
+		hkrtrn = hook.Run("AP_Bounced_"..slot.ID,packet)
+	end
 end
 
 --------------------- RoomUpdate
 
 function PR.RoomUpdate(packet,slot)
-    if packet.checked_locations != nil then
-        for k,v in ipairs(packet.checked_locations) do
-            if slot.Locations[v] != true then
-                slot.Locations[v] = true
-                GMAP.RunTrackers(slot.ID,"lctn",v)
-                slot:OnLocationUpdate(v,true)
-                hook.Run("AP_"..slot.ID.."_LocationListUpdate")
-            end
-        end
-    end
-    if packet.players then
-        local playertbl = {} -- same code is also run in Connected, consider turning this into a function
+	if packet.checked_locations != nil then
+		for k,v in ipairs(packet.checked_locations) do
+			if slot.Locations[v] != true then
+				slot.Locations[v] = true
+				GMAP.RunTrackers(slot.ID,"lctn",v)
+				slot:OnLocationUpdate(v,true)
+				hook.Run("AP_"..slot.ID.."_LocationListUpdate")
+			end
+		end
+	end
+	if packet.players then
+		local playertbl = {} -- same code is also run in Connected, consider turning this into a function
 
-        for k,v in ipairs(packet.players) do
-            v.class = nil
-            local teamid = v.team
-            local slotid = v.slot
-            v.team = nil
-            v.slot = nil
-            playertbl[teamid] = playertbl[teamid] or {}
-            playertbl[teamid][slotid] = v
-        end
+		for k,v in ipairs(packet.players) do
+			v.class = nil
+			local teamid = v.team
+			local slotid = v.slot
+			v.team = nil
+			v.slot = nil
+			playertbl[teamid] = playertbl[teamid] or {}
+			playertbl[teamid][slotid] = v
+		end
 
-        slot.Room.Players = playertbl
-    end
+		slot.Room.Players = playertbl
+	end
 end
 
 --------------- Retrieved
 
 local function DSHandler(slot, key, value)
-    if string.StartsWith(key,"GiftBoxes;") then
-        local teamnum = tonumber(string.sub(key,11,-1))
-        for k,v in pairs(value) do
-            local newtraits = {}
-            print("desired_traits",v.desired_traits,v)
-            if v.desired_traits then
-                for ik,iv in ipairs(v.desired_traits) do
-                    newtraits[iv] = true
-                end
-            end
-            v.desired_traits = newtraits
-            slot.Room.GiftBoxes[teamnum] = value
-        end
-    else
-        slot.Room.DataStore[key] = value
-    end
-    GMAP.RunTrackers(slot.ID,"dstore",key)
+	if string.StartsWith(key,"GiftBoxes;") then
+		local teamnum = tonumber(string.sub(key,11,-1))
+		for k,v in pairs(value) do
+			local newtraits = {}
+			print("desired_traits",v.desired_traits,v)
+			if v.desired_traits then
+				for ik,iv in ipairs(v.desired_traits) do
+					newtraits[iv] = true
+				end
+			end
+			v.desired_traits = newtraits
+			slot.Room.GiftBoxes[teamnum] = value
+		end
+	else
+		slot.Room.DataStore[key] = value
+	end
+	GMAP.RunTrackers(slot.ID,"dstore",key)
 end
 
 function PR.Retrieved(packet,slot)
-    local store = true
-    local cb = slot.GetCBs[packet.reqid]
-    if isfunction(cb) then
-        store = cb(packet)
-        slot.GetCBs[packet.reqid] = nil
-    end
+	local store = true
+	local cb = slot.GetCBs[packet.reqid]
+	if isfunction(cb) then
+		store = cb(packet)
+		slot.GetCBs[packet.reqid] = nil
+	end
 
-    if !store then return end
+	if !store then return end
 
-    for k,v in pairs(packet.keys) do
-        DSHandler(slot,k,v)
-    end
+	for k,v in pairs(packet.keys) do
+		DSHandler(slot,k,v)
+	end
 end
 
 ------------ SetReply
 
 function PR.SetReply(packet,slot)
-    local reqid = packet.reqid
-    local cbtbl = slot.GetCBs
-    if reqid and isfunction(cbtbl[reqid]) then
-        cbtbl[reqid](packet)
-        cbtbl[reqid] = nil
-    end
+	local reqid = packet.reqid
+	local cbtbl = slot.GetCBs
+	if reqid and isfunction(cbtbl[reqid]) then
+		cbtbl[reqid](packet)
+		cbtbl[reqid] = nil
+	end
 
-    DSHandler(slot,packet.key,packet.value)
+	DSHandler(slot,packet.key,packet.value)
 end
 
 ------------ LocationInfo
 
 function PR.LocationInfo(packet,slot)
-    local locs = packet.locations
-    local CBs = slot.ScoutCBs
-    local locinfo = slot.LocationInfo
+	local locs = packet.locations
+	local CBs = slot.ScoutCBs
+	local locinfo = slot.LocationInfo
 
-    for k,v in ipairs(locs) do
-        v.class = nil
-        local cbs = CBs[v.location]
-        if cbs then
-            for _,f in ipairs(cbs) do f(v) end
-            CBs[v.location] = nil
-        end
-        locinfo[v.location] = v
-    end
+	for k,v in ipairs(locs) do
+		v.class = nil
+		local cbs = CBs[v.location]
+		if cbs then
+			for _,f in ipairs(cbs) do f(v) end
+			CBs[v.location] = nil
+		end
+		locinfo[v.location] = v
+	end
 end
 
 ------------ InvalidPacket
 
 function PR.InvalidPacket(packet,slot)
-    print("Received InvalidPacket Packet")
-    ErrorNoHalt("Invalid Packet sent to server: "..packet.text.."\n")
+	print("Received InvalidPacket Packet")
+	ErrorNoHalt("Invalid Packet sent to server: "..packet.text.."\n")
 end
 
 setmetatable(PR,{
-    __index = function(self,key)
-        return function(packet,slot)
-            ErrorNoHalt("Received Unhandled Package Type "..packet.cmd.." for "..slot.ID.."\n")
-            PrintTable(packet)
-        end
-    end
+	__index = function(self,key)
+		return function(packet,slot)
+			ErrorNoHalt("Received Unhandled Package Type "..packet.cmd.." for "..slot.ID.."\n")
+			PrintTable(packet)
+		end
+	end
 })
 
 return PR

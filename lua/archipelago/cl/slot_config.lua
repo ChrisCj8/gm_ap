@@ -1,10 +1,10 @@
 local devmodecvar = CreateClientConVar("gmap_showslotconfig",0,false,false,"Controls whether or not the slot configurator is accessible in the utilities menu.",0,1)
 
 hook.Add( "AddToolMenuCategories", "ArchipelagoCategories", function()
-    if devmodecvar:GetBool() then
-        spawnmenu.AddToolCategory( "Utilities", "Archipelago", "Archipelago" )
-        spawnmenu.AddToolMenuOption( "Utilities", "Archipelago", "APSlotConfig", "#menu.ap_slot_config.title", "", "", BuildSlotConfigMenu )
-    end
+	if devmodecvar:GetBool() then
+		spawnmenu.AddToolCategory( "Utilities", "Archipelago", "Archipelago" )
+		spawnmenu.AddToolMenuOption( "Utilities", "Archipelago", "APSlotConfig", "#menu.ap_slot_config.title", "", "", BuildSlotConfigMenu )
+	end
 end)
 
 local SlotConfigPanel = SlotConfigPanel or {}
@@ -14,292 +14,292 @@ local ConfigSenderTable = {}
 local ConfigRefreshTarget  = ConfigRefreshTarget or {}
 
 net.Receive("APConfiguratorInfoSender", function(len)
-    table.Add(ConfigSenderTable,{net.ReadString()})
-    --PrintTable(ConfigSenderTable)
-    if net.ReadBool() then
-        ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
-        PrintTable(ConfigInfo)
-        ConfigRefreshTarget:Refresh()
-        ConfigSenderTable = {}
-    end
+	table.Add(ConfigSenderTable,{net.ReadString()})
+	--PrintTable(ConfigSenderTable)
+	if net.ReadBool() then
+		ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
+		PrintTable(ConfigInfo)
+		ConfigRefreshTarget:Refresh()
+		ConfigSenderTable = {}
+	end
 end)
 
 local function RequestConfig(refreshTarget)
-    net.Start("APConfiguratorCommand")
-        net.WriteString("Refresh")
-    net.SendToServer()
+	net.Start("APConfiguratorCommand")
+		net.WriteString("Refresh")
+	net.SendToServer()
 end
 
 function BuildSlotConfigMenu(panel)
 
-    SlotConfigPanel = panel
-    panel:Clear()
+	SlotConfigPanel = panel
+	panel:Clear()
 
-    --local HintBox = vgui.Create("DHTML",panel)
-    local HintText = vgui.Create("DLabel",panel)
-    HintText:SetDark(true)
-    HintText:SetText("")
-    HintText:SetAutoStretchVertical(true)
-    HintText:SetWrap(true)
-    /* HintBox:SetHTML([[
-        <head>
-            <style>
-                @font-face {
-                    font-family:mainfont;
-                    src: url(asset://garrysmod/resource/fonts/Roboto-Light.ttf);
-                }
+	--local HintBox = vgui.Create("DHTML",panel)
+	local HintText = vgui.Create("DLabel",panel)
+	HintText:SetDark(true)
+	HintText:SetText("")
+	HintText:SetAutoStretchVertical(true)
+	HintText:SetWrap(true)
+	/* HintBox:SetHTML([[
+		<head>
+			<style>
+				@font-face {
+					font-family:mainfont;
+					src: url(asset://garrysmod/resource/fonts/Roboto-Light.ttf);
+				}
 
-                * {
-                    font-family: mainfont;
-                    font-size: 10px;
-                    color: black;
-                }
-            </style>
-        </head>
-        <body>
-            <script>
-                const body = document.body;
+				* {
+					font-family: mainfont;
+					font-size: 10px;
+					color: black;
+				}
+			</style>
+		</head>
+		<body>
+			<script>
+				const body = document.body;
 
-                function setText(text) {
-                    body.innerHTML = text
-                }
-            </script>
-        </body>
-    ]])
-    HintBox:SetHeight(100)*/
+				function setText(text) {
+					body.innerHTML = text
+				}
+			</script>
+		</body>
+	]])
+	HintBox:SetHeight(100)*/
 
-    local function ReportHover(pnl)
-        --HintBox:QueueJavascript('setText("'..language.GetPhrase("menu.ap_slot_config.hint."..pnl.HintName)..'")')
-        local hint = pnl.HintName
-        if hint then
-            HintText:SetText(language.GetPhrase("menu.ap_slot_config.hint."..hint))
-        else
-            HintText:SetText("")
-        end
-    end
+	local function ReportHover(pnl)
+		--HintBox:QueueJavascript('setText("'..language.GetPhrase("menu.ap_slot_config.hint."..pnl.HintName)..'")')
+		local hint = pnl.HintName
+		if hint then
+			HintText:SetText(language.GetPhrase("menu.ap_slot_config.hint."..hint))
+		else
+			HintText:SetText("")
+		end
+	end
 
-    local function CheckBox(locname,indent)
-        local pnl = vgui.Create("DCheckBoxLabel", panel)
-        pnl:SetText("#menu.ap_slot_config."..locname)
-        pnl:SetDark(true)
-        pnl:SetIndent(indent)
-        local hintloc = "menu.ap_slot_config.hint."..locname
-        if language.GetPhrase(hintloc) != hintloc then
-            pnl.HintName = locname
-        end
-        pnl.OnCursorEntered = ReportHover
-        return pnl
-    end
+	local function CheckBox(locname,indent)
+		local pnl = vgui.Create("DCheckBoxLabel", panel)
+		pnl:SetText("#menu.ap_slot_config."..locname)
+		pnl:SetDark(true)
+		pnl:SetIndent(indent)
+		local hintloc = "menu.ap_slot_config.hint."..locname
+		if language.GetPhrase(hintloc) != hintloc then
+			pnl.HintName = locname
+		end
+		pnl.OnCursorEntered = ReportHover
+		return pnl
+	end
 
-    local ActiveSlotsLabel = vgui.Create("DLabel",panel)
-    ActiveSlotsLabel:SetText("#menu.ap_slot_config.registeredslots")
-    ActiveSlotsLabel:SetDark(true)
+	local ActiveSlotsLabel = vgui.Create("DLabel",panel)
+	ActiveSlotsLabel:SetText("#menu.ap_slot_config.registeredslots")
+	ActiveSlotsLabel:SetDark(true)
 
-    local SlotsPanel = vgui.Create("DListView",panel)
-    SlotsPanel:AddColumn("#menu.ap_slot_config.identifier",1)
-    SlotsPanel:AddColumn("#menu.ap_slot_config.slot_name",2)
-    SlotsPanel:AddColumn("#menu.ap_slot_config.game",3)
-    SlotsPanel:AddColumn("#menu.ap_slot_config.connected",4)
-    SlotsPanel:SetHeight(100)
+	local SlotsPanel = vgui.Create("DListView",panel)
+	SlotsPanel:AddColumn("#menu.ap_slot_config.identifier",1)
+	SlotsPanel:AddColumn("#menu.ap_slot_config.slot_name",2)
+	SlotsPanel:AddColumn("#menu.ap_slot_config.game",3)
+	SlotsPanel:AddColumn("#menu.ap_slot_config.connected",4)
+	SlotsPanel:SetHeight(100)
 
-    ConfigRefreshTarget = SlotsPanel
+	ConfigRefreshTarget = SlotsPanel
 
-    local RefreshSlotsButton = vgui.Create("DButton",panel)
-    function RefreshSlotsButton:DoClick()
-        RequestConfig(SlotsPanel)
-    end
-    RefreshSlotsButton:SetText("#menu.ap_slot_config.refreshslots")
+	local RefreshSlotsButton = vgui.Create("DButton",panel)
+	function RefreshSlotsButton:DoClick()
+		RequestConfig(SlotsPanel)
+	end
+	RefreshSlotsButton:SetText("#menu.ap_slot_config.refreshslots")
 
-    local ConnectButton = vgui.Create("DButton",panel)
-    function ConnectButton:DoClick()
-        PrintTable(SlotsPanel:GetSelected())
-        for k,v in ipairs(SlotsPanel:GetSelected()) do
-            net.Start("APConfiguratorCommand")
-                net.WriteString("Connect")
-                net.WriteString(v:GetValue(1))
-            net.SendToServer()
-        end
-    end
-    ConnectButton:SetText("#menu.ap_slot_config.connectslot")
+	local ConnectButton = vgui.Create("DButton",panel)
+	function ConnectButton:DoClick()
+		PrintTable(SlotsPanel:GetSelected())
+		for k,v in ipairs(SlotsPanel:GetSelected()) do
+			net.Start("APConfiguratorCommand")
+				net.WriteString("Connect")
+				net.WriteString(v:GetValue(1))
+			net.SendToServer()
+		end
+	end
+	ConnectButton:SetText("#menu.ap_slot_config.connectslot")
 
-    local DisconnectButton = vgui.Create("DButton",panel)
-    function DisconnectButton:DoClick()
-        PrintTable(SlotsPanel:GetSelected())
-        for k,v in ipairs(SlotsPanel:GetSelected()) do
-            net.Start("APConfiguratorCommand")
-                net.WriteString("Disconnect")
-                net.WriteString(v:GetValue(1))
-            net.SendToServer()
-        end
-    end
-    DisconnectButton:SetText("#menu.ap_slot_config.disconnectslot")
+	local DisconnectButton = vgui.Create("DButton",panel)
+	function DisconnectButton:DoClick()
+		PrintTable(SlotsPanel:GetSelected())
+		for k,v in ipairs(SlotsPanel:GetSelected()) do
+			net.Start("APConfiguratorCommand")
+				net.WriteString("Disconnect")
+				net.WriteString(v:GetValue(1))
+			net.SendToServer()
+		end
+	end
+	DisconnectButton:SetText("#menu.ap_slot_config.disconnectslot")
 
-    local DeleteButton = vgui.Create("DButton",panel)
-    function DeleteButton:DoClick()
-        PrintTable(SlotsPanel:GetSelected())
-        for k,v in ipairs(SlotsPanel:GetSelected()) do
-            net.Start("APConfiguratorCommand")
-                net.WriteString("Delete")
-                net.WriteString(v:GetValue(1))
-            net.SendToServer()
-        end
-    end
-    DeleteButton:SetText("#menu.ap_slot_config.deleteslot")
+	local DeleteButton = vgui.Create("DButton",panel)
+	function DeleteButton:DoClick()
+		PrintTable(SlotsPanel:GetSelected())
+		for k,v in ipairs(SlotsPanel:GetSelected()) do
+			net.Start("APConfiguratorCommand")
+				net.WriteString("Delete")
+				net.WriteString(v:GetValue(1))
+			net.SendToServer()
+		end
+	end
+	DeleteButton:SetText("#menu.ap_slot_config.deleteslot")
 
-    --local Divider1 = vgui.Create("DVerticalDivider",panel)
+	--local Divider1 = vgui.Create("DVerticalDivider",panel)
 
-    local labelwidth = 70
-    local scalinginputs = {}
+	local labelwidth = 70
+	local scalinginputs = {}
 
-    local function GenerateTextInput(labelText,hintname)
-        local TextInput = vgui.Create("DPanel", panel)
-        TextInput:SetPaintBackground(false)
-        TextInput:StretchToParent(0,0,0)
-        TextInput:SetTall(20)
+	local function GenerateTextInput(labelText,hintname)
+		local TextInput = vgui.Create("DPanel", panel)
+		TextInput:SetPaintBackground(false)
+		TextInput:StretchToParent(0,0,0)
+		TextInput:SetTall(20)
 
-            TextInput.Label = vgui.Create("DLabel", TextInput)
-            TextInput.Label:SetText(labelText)
-            TextInput.Label:AlignLeft(0)
-            TextInput.Label:SetDark(true)
-            TextInput.Label:SetWidth(labelwidth)
+			TextInput.Label = vgui.Create("DLabel", TextInput)
+			TextInput.Label:SetText(labelText)
+			TextInput.Label:AlignLeft(0)
+			TextInput.Label:SetDark(true)
+			TextInput.Label:SetWidth(labelwidth)
 
-            TextInput.Input = vgui.Create("DTextEntry", TextInput)
-            TextInput.Input:AlignLeft(labelwidth + 20)
+			TextInput.Input = vgui.Create("DTextEntry", TextInput)
+			TextInput.Input:AlignLeft(labelwidth + 20)
 
-            if hintname != nil then
-                TextInput.Label.OnCursorEntered = ReportHover
-                TextInput.Label.HintName = hintname
-                TextInput.Input.OnCursorEntered = ReportHover
-                TextInput.Input.HintName = hintname
-            end
+			if hintname != nil then
+				TextInput.Label.OnCursorEntered = ReportHover
+				TextInput.Label.HintName = hintname
+				TextInput.Input.OnCursorEntered = ReportHover
+				TextInput.Input.HintName = hintname
+			end
 
-            scalinginputs[#scalinginputs+1] = TextInput.Input
+			scalinginputs[#scalinginputs+1] = TextInput.Input
 
-        return TextInput
-    end
+		return TextInput
+	end
 
-    local IdentifierInput = GenerateTextInput("#menu.ap_slot_config.slot_identifier","identifier")
-    local SlotNameInput = GenerateTextInput("Slot Name","slotname")
+	local IdentifierInput = GenerateTextInput("#menu.ap_slot_config.slot_identifier","identifier")
+	local SlotNameInput = GenerateTextInput("Slot Name","slotname")
 
-    function SlotNameInput.Input:OnChange()
-        IdentifierInput.Input:SetPlaceholderText(self:GetValue())
-    end
+	function SlotNameInput.Input:OnChange()
+		IdentifierInput.Input:SetPlaceholderText(self:GetValue())
+	end
 
-    local AddressInput = GenerateTextInput("#menu.ap_slot_config.slot_address","address")
-    AddressInput.Input:SetPlaceholderText("ws://localhost:38281")
+	local AddressInput = GenerateTextInput("#menu.ap_slot_config.slot_address","address")
+	AddressInput.Input:SetPlaceholderText("ws://localhost:38281")
 
-    local SlotPasswordInput = GenerateTextInput("#menu.ap_slot_config.slot_pass","password")
-    local GameInput = GenerateTextInput("#menu.ap_slot_config.game_name","game")
+	local SlotPasswordInput = GenerateTextInput("#menu.ap_slot_config.slot_pass","password")
+	local GameInput = GenerateTextInput("#menu.ap_slot_config.game_name","game")
 
-    local TextOnlyCheck = CheckBox("text_only_check",20)
-    local ReceiveAPchatCheck = CheckBox("receive_chat_check",20)
-    local ForwardAPchatCheck = CheckBox("forward_to_gmod_chat",30)
-    local ForwardGMODchatCheck = CheckBox("forward_to_ap_chat",30)
-    local DeathlinkCheck = CheckBox("deathlink_check",20)
+	local TextOnlyCheck = CheckBox("text_only_check",20)
+	local ReceiveAPchatCheck = CheckBox("receive_chat_check",20)
+	local ForwardAPchatCheck = CheckBox("forward_to_gmod_chat",30)
+	local ForwardGMODchatCheck = CheckBox("forward_to_ap_chat",30)
+	local DeathlinkCheck = CheckBox("deathlink_check",20)
 
-    local UpdateButton = vgui.Create("DButton",panel)
-    function UpdateButton:DoClick()
-        if SlotNameInput.Input:GetText() != "" and SlotNameInput.Input:GetText() != "" then
-            local ConfigData = util.TableToJSON({
-                ID = IdentifierInput.Input:GetText(),
-                slotName = SlotNameInput.Input:GetText(),
-                password = SlotPasswordInput.Input:GetText(),
-                game = GameInput.Input:GetText(),
-                address = AddressInput.Input:GetText(),
-                forwardAPchat = ForwardAPchatCheck:GetChecked(),
-                forwardGMODchat = ForwardGMODchatCheck:GetChecked(),
-                receiveAPchat = ReceiveAPchatCheck:GetChecked(),
-                textOnly = TextOnlyCheck:GetChecked(),
-                deathlink = DeathlinkCheck:GetChecked(),
-            })
-            repeat
-                net.Start("APConfiguratorInfoSender")
-                    net.WriteString(string.sub(ConfigData,0,64000))
-                    ConfigData = (string.sub(ConfigData,64001))
-                    net.WriteBool(#ConfigData == 0)
-                    --print((net.BytesWritten()).." bytes")
-                net.SendToServer()
-            until #ConfigData == 0
-        end
-    end
-    UpdateButton:SetText("#menu.ap_slot_config.updateslot")
+	local UpdateButton = vgui.Create("DButton",panel)
+	function UpdateButton:DoClick()
+		if SlotNameInput.Input:GetText() != "" and SlotNameInput.Input:GetText() != "" then
+			local ConfigData = util.TableToJSON({
+				ID = IdentifierInput.Input:GetText(),
+				slotName = SlotNameInput.Input:GetText(),
+				password = SlotPasswordInput.Input:GetText(),
+				game = GameInput.Input:GetText(),
+				address = AddressInput.Input:GetText(),
+				forwardAPchat = ForwardAPchatCheck:GetChecked(),
+				forwardGMODchat = ForwardGMODchatCheck:GetChecked(),
+				receiveAPchat = ReceiveAPchatCheck:GetChecked(),
+				textOnly = TextOnlyCheck:GetChecked(),
+				deathlink = DeathlinkCheck:GetChecked(),
+			})
+			repeat
+				net.Start("APConfiguratorInfoSender")
+					net.WriteString(string.sub(ConfigData,0,64000))
+					ConfigData = (string.sub(ConfigData,64001))
+					net.WriteBool(#ConfigData == 0)
+					--print((net.BytesWritten()).." bytes")
+				net.SendToServer()
+			until #ConfigData == 0
+		end
+	end
+	UpdateButton:SetText("#menu.ap_slot_config.updateslot")
 
-    panel:AddItem(ActiveSlotsLabel)
-    panel:AddItem(SlotsPanel)
-    panel:AddItem(RefreshSlotsButton)
-    panel:AddItem(ConnectButton)
-    panel:AddItem(DisconnectButton)
-    panel:AddItem(DeleteButton)
-    --panel:AddItem(Divider1)
-    panel:AddItem(IdentifierInput)
-    panel:AddItem(SlotNameInput)
-    panel:AddItem(SlotPasswordInput)
-    panel:AddItem(AddressInput)
-    panel:AddItem(GameInput)
-    panel:AddItem(TextOnlyCheck)
-    panel:AddItem(ReceiveAPchatCheck)
-    panel:AddItem(ForwardAPchatCheck)
-    panel:AddItem(ForwardGMODchatCheck)
-    panel:AddItem(DeathlinkCheck)
-    panel:AddItem(UpdateButton)
-    panel:AddItem(HintText)
+	panel:AddItem(ActiveSlotsLabel)
+	panel:AddItem(SlotsPanel)
+	panel:AddItem(RefreshSlotsButton)
+	panel:AddItem(ConnectButton)
+	panel:AddItem(DisconnectButton)
+	panel:AddItem(DeleteButton)
+	--panel:AddItem(Divider1)
+	panel:AddItem(IdentifierInput)
+	panel:AddItem(SlotNameInput)
+	panel:AddItem(SlotPasswordInput)
+	panel:AddItem(AddressInput)
+	panel:AddItem(GameInput)
+	panel:AddItem(TextOnlyCheck)
+	panel:AddItem(ReceiveAPchatCheck)
+	panel:AddItem(ForwardAPchatCheck)
+	panel:AddItem(ForwardGMODchatCheck)
+	panel:AddItem(DeathlinkCheck)
+	panel:AddItem(UpdateButton)
+	panel:AddItem(HintText)
 
-    local hintelements = {
-        [DeathlinkCheck] = "deathlink"
-    }
+	local hintelements = {
+		[DeathlinkCheck] = "deathlink"
+	}
 
-    for k,v in pairs(hintelements) do
-        k.OnCursorEntered = ReportHover
-        k.HintName = v
-    end
+	for k,v in pairs(hintelements) do
+		k.OnCursorEntered = ReportHover
+		k.HintName = v
+	end
 
-    --HintBox:StretchToParent(0,nil,0)
-    --HintText:StretchToParent(0,0,0,0)
+	--HintBox:StretchToParent(0,nil,0)
+	--HintText:StretchToParent(0,0,0,0)
 
-    function SlotsPanel:OnRowSelected( rowIndex, rowPanel )
-        local configtbl = ConfigInfo[rowPanel:GetValue(1)]
-        IdentifierInput.Input:SetText(configtbl.ID)
-        SlotNameInput.Input:SetText(configtbl.slotName)
-        SlotPasswordInput.Input:SetText(configtbl.password)
-        AddressInput.Input:SetText(configtbl.address)
-        GameInput.Input:SetText(configtbl.game)
-        ForwardAPchatCheck:SetValue(configtbl.forwardAPchat)
-        ReceiveAPchatCheck:SetValue(configtbl.receiveAPchat)
-        ForwardGMODchatCheck:SetValue(configtbl.forwardGMODchat)
-        TextOnlyCheck:SetValue(configtbl.textOnly)
-        DeathlinkCheck:SetValue(configtbl.deathlink)
-    end
+	function SlotsPanel:OnRowSelected( rowIndex, rowPanel )
+		local configtbl = ConfigInfo[rowPanel:GetValue(1)]
+		IdentifierInput.Input:SetText(configtbl.ID)
+		SlotNameInput.Input:SetText(configtbl.slotName)
+		SlotPasswordInput.Input:SetText(configtbl.password)
+		AddressInput.Input:SetText(configtbl.address)
+		GameInput.Input:SetText(configtbl.game)
+		ForwardAPchatCheck:SetValue(configtbl.forwardAPchat)
+		ReceiveAPchatCheck:SetValue(configtbl.receiveAPchat)
+		ForwardGMODchatCheck:SetValue(configtbl.forwardGMODchat)
+		TextOnlyCheck:SetValue(configtbl.textOnly)
+		DeathlinkCheck:SetValue(configtbl.deathlink)
+	end
 
-    function SlotsPanel:Refresh()
-        local oldSelection = self:GetSelected()
-        local oldSelectionVal
-        if #oldSelection > 0 then
-            oldSelectionVal = oldSelection[1]:GetValue(1)
-        end
-        for k,v in ipairs(SlotsPanel:GetLines()) do
-            SlotsPanel:RemoveLine(k)
-        end
-        for k,v in pairs(ConfigInfo) do
-            local newLine = self:AddLine(v.ID,v.slotName,v.game,v.connected)
-            if v.ID == oldSelectionVal then
-                self:SelectItem(newLine)
-            end
-        end
-    end
+	function SlotsPanel:Refresh()
+		local oldSelection = self:GetSelected()
+		local oldSelectionVal
+		if #oldSelection > 0 then
+			oldSelectionVal = oldSelection[1]:GetValue(1)
+		end
+		for k,v in ipairs(SlotsPanel:GetLines()) do
+			SlotsPanel:RemoveLine(k)
+		end
+		for k,v in pairs(ConfigInfo) do
+			local newLine = self:AddLine(v.ID,v.slotName,v.game,v.connected)
+			if v.ID == oldSelectionVal then
+				self:SelectItem(newLine)
+			end
+		end
+	end
 
-    local oldlayout = panel.PerformLayout
+	local oldlayout = panel.PerformLayout
 
-    function panel:PerformLayout(w,h)
-        oldlayout(self,w,h)
-        for k,v in ipairs(scalinginputs) do
-            v:StretchToParent(nil,0,0)
-        end
-    end
+	function panel:PerformLayout(w,h)
+		oldlayout(self,w,h)
+		for k,v in ipairs(scalinginputs) do
+			v:StretchToParent(nil,0,0)
+		end
+	end
 
-    RequestConfig(SlotsPanel)
+	RequestConfig(SlotsPanel)
 
 end
 
 function APRebuildSlotConfig()
-    BuildSlotConfigMenu(SlotConfigPanel)
+	BuildSlotConfigMenu(SlotConfigPanel)
 end

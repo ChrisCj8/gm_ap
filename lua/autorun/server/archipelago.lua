@@ -1,31 +1,31 @@
 if !util.IsBinaryModuleInstalled("gwsockets") then
-    AddCSLuaFile("archipelago/cl/installerror.lua")
-    util.AddNetworkString("GMAPInstallErrorInfo")
-    local errormsg
-    local files = file.Find("bin/gmsv_gwsockets_*.dll","lsv")
-    if files[1] == nil then
-        errormsg = "notfound"
-    else
-        local is64 = jit.arch == "x64"
-        if system.IsWindows() then
-            if file.Exists("bin/gmsv_gwsockets_win"..(is64 and "32" or "64")..".dll","lsv") then
-                errormsg = "wrongarchwin"..(is64 and "64" or "32")
-            end
+	AddCSLuaFile("archipelago/cl/installerror.lua")
+	util.AddNetworkString("GMAPInstallErrorInfo")
+	local errormsg
+	local files = file.Find("bin/gmsv_gwsockets_*.dll","lsv")
+	if files[1] == nil then
+		errormsg = "notfound"
+	else
+		local is64 = jit.arch == "x64"
+		if system.IsWindows() then
+			if file.Exists("bin/gmsv_gwsockets_win"..(is64 and "32" or "64")..".dll","lsv") then
+				errormsg = "wrongarchwin"..(is64 and "64" or "32")
+			end
 			if file.Find("bin/gmsv_gwsockets_linux*.dll","lsv")[1] != nil then
 				errormsg = "wrongosproton"
 			end
-        elseif system.IsLinux() then
-            if file.Exists("bin/gmsv_gwsockets_linux"..(is64 and "" or "64")..".dll","lsv") then
-                errormsg = "wrongarchlinux"..(is64 and "64" or "32")
+		elseif system.IsLinux() then
+			if file.Exists("bin/gmsv_gwsockets_linux"..(is64 and "" or "64")..".dll","lsv") then
+				errormsg = "wrongarchlinux"..(is64 and "64" or "32")
 			end
-        end
+		end
 		if !errormsg then errormsg = "wrongos" end
-    end
-    hook.Add("PlayerInitialSpawn","GMAPSendInstallError",function(ply)
-        net.Start("GMAPInstallErrorInfo")
-            net.WriteString(errormsg or "notfound")
-        net.Send(ply)
-    end)
+	end
+	hook.Add("PlayerInitialSpawn","GMAPSendInstallError",function(ply)
+		net.Start("GMAPInstallErrorInfo")
+			net.WriteString(errormsg or "notfound")
+		net.Send(ply)
+	end)
 end
 
 AddCSLuaFile("archipelago/cl/slot_config.lua")
@@ -40,7 +40,7 @@ GMAP.Connected = GMAP.Connected or {}
 GMAP.Rooms = GMAP.Rooms or {}
 
 if !file.IsDir("/archipelago/","DATA") then
-    file.CreateDir("archipelago")
+	file.CreateDir("archipelago")
 end
 
 include("archipelago/sv/dpmanagement.lua")
@@ -49,24 +49,24 @@ include("archipelago/sv/seedmanage.lua")
 local cols = GMAP.Colors
 
 GMAP.ItemTypeColors = {
-    [0] = cols.apcyan, -- normal
-    [1] = cols.applum, -- progression
-    [2] = cols.apslateblue, -- useful
-    [3] = cols.applum, -- proguseful
-    [4] = cols.apsalmon, -- trap
-    [5] = cols.applum, -- progtrap
-    [6] = cols.apslateblue, -- usefultrap
-    [7] = cols.applum, -- progusefultrap
+	[0] = cols.apcyan, -- normal
+	[1] = cols.applum, -- progression
+	[2] = cols.apslateblue, -- useful
+	[3] = cols.applum, -- proguseful
+	[4] = cols.apsalmon, -- trap
+	[5] = cols.applum, -- progtrap
+	[6] = cols.apslateblue, -- usefultrap
+	[7] = cols.applum, -- progusefultrap
 }
 
 setmetatable(GMAP.ItemTypeColors, {
-    __index = function(self, key)
-        local out = GMAP.Colors.apcyan
-        if isnumber(key) then
-            out = GMAP.ItemTypeColors[bit.band(key,7)]
-        end
-        return out
-    end
+	__index = function(self, key)
+		local out = GMAP.Colors.apcyan
+		if isnumber(key) then
+			out = GMAP.ItemTypeColors[bit.band(key,7)]
+		end
+		return out
+	end
 })
 
 include("archipelago/sv/slotbase.lua")
@@ -74,27 +74,27 @@ include("archipelago/sv/slotbase.lua")
 GMAP.ChatReaders = GMAP.ChatReaders or {}
 
 hook.Add("PlayerSay","APChatReader", function( ply, text )
-    for k,v in pairs(GMAP.ChatReaders) do
-        local slot = GMAP.Registered[v.ID]
-        if slot.Socket:isConnected() then
-            slot:SendChatMessage("["..ply:Name().."] "..text)
-        end
-    end
+	for k,v in pairs(GMAP.ChatReaders) do
+		local slot = GMAP.Registered[v.ID]
+		if slot.Socket:isConnected() then
+			slot:SendChatMessage("["..ply:Name().."] "..text)
+		end
+	end
 end)
 
 local lastcol
 function GMAP.SendChatMessage(txt,clr,last)
-    txt = txt or "empty"
-    net.Start("APmessage")
+	txt = txt or "empty"
+	net.Start("APmessage")
 		if clr != lastcol then
 			net.WriteBool(true)
 			net.WriteColor(clr,false)
 		else
 			net.WriteBool(false)
 		end
-        net.WriteString(txt)
-        net.WriteBool(last)
-    net.Broadcast()
+		net.WriteString(txt)
+		net.WriteBool(last)
+	net.Broadcast()
 	if last then
 		lastcol = nil
 	else
@@ -103,145 +103,145 @@ function GMAP.SendChatMessage(txt,clr,last)
 end
 
 function GMAP.SendNotify(txt,type,time,ply)
-    net.Start("APnotify")
-        net.WriteString(txt)
-        net.WriteUInt(type,3)
-        net.WriteDouble(time)
-    if ply != nil then
-        net.Send(ply)
-    else
-        net.Broadcast()
-    end
+	net.Start("APnotify")
+		net.WriteString(txt)
+		net.WriteUInt(type,3)
+		net.WriteDouble(time)
+	if ply != nil then
+		net.Send(ply)
+	else
+		net.Broadcast()
+	end
 end
 
 local function GenerateConfigData()
-    local ConfigData = {}
-    for k,v in pairs(GMAP.Registered) do
-        if !v.dontStore then
-            local data = {}
-            local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
-            for ik,iv in ipairs(CopyFields) do
-                data[iv] = v[iv]
-            end
-            if v.Socket != nil and v.Socket:isConnected() then
-                data.connected = true
-            end
-            ConfigData[k] = data
-        end
-    end
-    return ConfigData
+	local ConfigData = {}
+	for k,v in pairs(GMAP.Registered) do
+		if !v.dontStore then
+			local data = {}
+			local CopyFields = {"ID","slotName","forwardAPchat","forwardGMODchat","receiveAPchat","game","password","textOnly","address","deathlink"}
+			for ik,iv in ipairs(CopyFields) do
+				data[iv] = v[iv]
+			end
+			if v.Socket != nil and v.Socket:isConnected() then
+				data.connected = true
+			end
+			ConfigData[k] = data
+		end
+	end
+	return ConfigData
 end
 
 local reconnectonloadCVAR = CreateConVar("sv_gmap_reconnect_on_persist_load",1,FCVAR_ARCHIVE,"Automatically reconnect all slots that were connected the last time the persistence data was saved.",0,1)
 
 local function ApplyConfigData(data)
-    for k,v in pairs(data) do
-        GMAP.NewSlot(v)
-        if v.connected and reconnectonloadCVAR:GetBool() then -- may be a good idea to move this somewhere else later
-            GMAP.Registered[k]:Connect()
-        end
-    end
+	for k,v in pairs(data) do
+		GMAP.NewSlot(v)
+		if v.connected and reconnectonloadCVAR:GetBool() then -- may be a good idea to move this somewhere else later
+			GMAP.Registered[k]:Connect()
+		end
+	end
 end
 
 local function ConfigSender(ply)
-    local ConfigString = util.TableToJSON(GenerateConfigData())
-    local done
-    repeat
-        net.Start("APConfiguratorInfoSender")
-            net.WriteString(string.sub(ConfigString,0,64000))
-            ConfigString = (string.sub(ConfigString,64001))
-            done = ConfigString == ""
-            net.WriteBool(done)
-        net.Send( ply )
-    until done
+	local ConfigString = util.TableToJSON(GenerateConfigData())
+	local done
+	repeat
+		net.Start("APConfiguratorInfoSender")
+			net.WriteString(string.sub(ConfigString,0,64000))
+			ConfigString = (string.sub(ConfigString,64001))
+			done = ConfigString == ""
+			net.WriteBool(done)
+		net.Send( ply )
+	until done
 end
 
 local ConfigSenderTable = ConfigSenderTable or {}
 local ConfigInfo = ConfigInfo or {}
 
 net.Receive("APConfiguratorInfoSender", function(len,ply)
-    table.Add(ConfigSenderTable,{net.ReadString()})
-    if net.ReadBool() then
-        ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
-        if ConfigInfo.ID == "" then
-            ConfigInfo.ID = ConfigInfo.slotName
-        end
+	table.Add(ConfigSenderTable,{net.ReadString()})
+	if net.ReadBool() then
+		ConfigInfo = util.JSONToTable(table.concat(ConfigSenderTable)) or {}
+		if ConfigInfo.ID == "" then
+			ConfigInfo.ID = ConfigInfo.slotName
+		end
 
-        local id = ConfigInfo.ID
-        local slottbl = GMAP.Registered[id]
+		local id = ConfigInfo.ID
+		local slottbl = GMAP.Registered[id]
 
-        if slottbl != nil then
-            if GMAP.Connected[id] != nil then
-                if ConfigInfo.receiveAPchat != slottbl.receiveAPchat or ConfigInfo.deathlink != slottbl.deathlink then
-                    local tags = {}
-                    if slottbl.cantSendLocations == true then
-                        tags[#tags+1] = "TextOnly"
-                    end
-                    if ConfigInfo.receiveAPchat == false then
-                        tags[#tags+1] = "NoText"
-                    end
-                    if ConfigInfo.deathlink == true then
-                        tags[#tags+1] = "DeathLink"
-                    end
-                    GMAP.Connected[id].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
-                end
-                if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[id] == nil then
-                    GMAP.ChatReaders[id] = slottbl
-                elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[id] != nil then
-                    GMAP.ChatReaders[id] = nil
-                end
-                if ConfigInfo.address != slottbl.address then
-                    ConfigInfo.address = nil
-                    GMAP.SendNotify("Can't change address while slot is connected, address change discarded ",1,3,ply)
-                end
-            end
-            table.Merge(slottbl,ConfigInfo)
-            print("updated slot "..id)
-        else
-            GMAP.NewSlot(ConfigInfo)
-            print("created new slot "..id)
-        end
-        ConfigSenderTable = {}
-        ConfigSender(ply)
-    end
+		if slottbl != nil then
+			if GMAP.Connected[id] != nil then
+				if ConfigInfo.receiveAPchat != slottbl.receiveAPchat or ConfigInfo.deathlink != slottbl.deathlink then
+					local tags = {}
+					if slottbl.cantSendLocations == true then
+						tags[#tags+1] = "TextOnly"
+					end
+					if ConfigInfo.receiveAPchat == false then
+						tags[#tags+1] = "NoText"
+					end
+					if ConfigInfo.deathlink == true then
+						tags[#tags+1] = "DeathLink"
+					end
+					GMAP.Connected[id].Socket:write('[{"cmd":"ConnectUpdate","tags":'..util.TableToJSON(tags)..'}]')
+				end
+				if ConfigInfo.forwardGMODchat == true and GMAP.ChatReaders[id] == nil then
+					GMAP.ChatReaders[id] = slottbl
+				elseif ConfigInfo.forwardGMODchat == false and GMAP.ChatReaders[id] != nil then
+					GMAP.ChatReaders[id] = nil
+				end
+				if ConfigInfo.address != slottbl.address then
+					ConfigInfo.address = nil
+					GMAP.SendNotify("Can't change address while slot is connected, address change discarded ",1,3,ply)
+				end
+			end
+			table.Merge(slottbl,ConfigInfo)
+			print("updated slot "..id)
+		else
+			GMAP.NewSlot(ConfigInfo)
+			print("created new slot "..id)
+		end
+		ConfigSenderTable = {}
+		ConfigSender(ply)
+	end
 end)
 
 net.Receive("APConfiguratorCommand", function(len, ply)
-    local cmd = net.ReadString()
-    if cmd == "Refresh" then
-        ConfigSender(ply)
-    elseif cmd == "Connect" then
-        local slot = net.ReadString()
-        GMAP.Registered[slot]:Connect()
-    elseif cmd == "Disconnect" then
-        local slot = net.ReadString()
-        GMAP.Registered[slot]:Disconnect()
-    elseif cmd == "Delete" then
-        local slot = net.ReadString()
-        if GMAP.Connected[slot] == nil then
-            GMAP.Registered[slot] = nil
-        else
-            GMAP.SendNotify("Can't delete currently connected slot "..slot,1,3,ply)
-            print(ply:Name().." tried to delete currently connected slot "..slot)
-        end
-        ConfigSender(ply)
-    end
+	local cmd = net.ReadString()
+	if cmd == "Refresh" then
+		ConfigSender(ply)
+	elseif cmd == "Connect" then
+		local slot = net.ReadString()
+		GMAP.Registered[slot]:Connect()
+	elseif cmd == "Disconnect" then
+		local slot = net.ReadString()
+		GMAP.Registered[slot]:Disconnect()
+	elseif cmd == "Delete" then
+		local slot = net.ReadString()
+		if GMAP.Connected[slot] == nil then
+			GMAP.Registered[slot] = nil
+		else
+			GMAP.SendNotify("Can't delete currently connected slot "..slot,1,3,ply)
+			print(ply:Name().." tried to delete currently connected slot "..slot)
+		end
+		ConfigSender(ply)
+	end
 end)
 
 function GMAP.DisconnectAll()
-    for k,v in pairs(GMAP.Connected) do
-        v:Disconnect()
-    end
+	for k,v in pairs(GMAP.Connected) do
+		v:Disconnect()
+	end
 end
 
 hook.Add("Initialize","apConfigLoad", function()
-    if file.Exists("archipelago/slotconfig.json","DATA") then
-        ApplyConfigData(util.JSONToTable(file.Read("archipelago/slotconfig.json")))
-    end
+	if file.Exists("archipelago/slotconfig.json","DATA") then
+		ApplyConfigData(util.JSONToTable(file.Read("archipelago/slotconfig.json")))
+	end
 end)
 
 hook.Add("ShutDown","apConfigSave", function()
-    file.Write("archipelago/slotconfig.json",util.TableToJSON(GenerateConfigData()))
+	file.Write("archipelago/slotconfig.json",util.TableToJSON(GenerateConfigData()))
 end)
 
 include("archipelago/sv/tracking.lua")

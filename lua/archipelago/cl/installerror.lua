@@ -18,11 +18,11 @@ errortext:SetWrap(true)
 errortext:SetText("#gmap.installerrorui.error."..errortype)
 
 function background:PerformLayout(w,h)
-    errortext:SetSize(w-10,h-10)
+	errortext:SetSize(w-10,h-10)
 end
 
 local oldlayout = window.PerformLayout
 function window:PerformLayout(w,h)
-    oldlayout(self,w,h)
-    background:SetSize(w-10,h-30)
+	oldlayout(self,w,h)
+	background:SetSize(w-10,h-30)
 end
