@@ -297,7 +297,12 @@ function APslotBase:WriteDataPackage()
 end
 
 function APslotBase:SendDeathLink(cause,nameoverride)
-	self.Socket:write('[{"cmd":"Bounce","tags":["DeathLink"],"data":{"time":'..os.time()..',"source":"'..(nameoverride or self.ID)..'","cause":"'..cause..'"}}]')
+	if !self.deathlink or !self.FullData then return end
+	-- this looks gross as hell but i'm hoping that building the json string manually is faster than using TableToJSON
+	self.Socket:write("[{\"cmd\":\"Bounce\",\"tags\":[\""..self.deathlinktag.."\"],\"data\":{\"time\":"..(os.time()+self.timediff)..
+		",\"source\":\""..(nameoverride or self.ID).."\""..
+		(cause and (",\"cause\":\""..cause.."\"") or "")..
+		"}}]")
 end
 
 function APslotBase:GetLocationInfo(lctn,hint,cb)
@@ -360,6 +365,73 @@ function APslotBase:OnFullData() end
 function APslotBase:OnDisconnect() end
 function APslotBase:OnBounce() end
 
+local function IsHandledTag(tag)
+	local lookup = {
+		DeathLink = true,
+		NoText = true,
+		TextOnly = true,
+		Tracker = true,
+		AP = true,
+		HintGame = true,
+	}
+	if lookup[tag] then return true end
+	if string.StartsWith(tag,"DeathLink") then return true end
+end
+
+function APslotBase:AddCustomTag(tag)
+	if IsHandledTag(tag) then return end
+	self.CustomTags[tag] = true
+end
+
+function APslotBase:RemoveCustomTag(tag)
+	if IsHandledTag(tag) then return end
+	self.CustomTags[tag] = true
+end
+
+function APslotBase:SetDeathLink(val)
+	self.deathlink = val
+	if val then
+		self.deathlinktag = isbool(val) and "DeathLink" or ("DeathLink"..val)
+	else
+		self.deathlinktag = nil
+	end
+end
+
+function APslotBase:GetTagList()
+	local tags = {}
+	local tagnr = 0
+	if self.receiveAPchat == false then
+		tagnr = tagnr + 1
+		tags[tagnr] = "NoText"
+	end
+	self.cantSendLocations = nil
+	if self.textOnly == true or gamename == "" then
+		tagnr = tagnr + 1
+		tags[tagnr] = "TextOnly"
+		self.cantSendLocations = true
+	end
+	local dl = self.deathlink
+	if dl then
+		tagnr = tagnr + 1
+		local dlstr = "DeathLink"
+		if !isbool(dl) then
+			dlstr = dlstr..dl
+		end
+		tags[tagnr] = dlstr
+	end
+
+	for k,v in pairs(self.CustomTags) do
+		tagnr = tagnr + 1
+		tags[tagnr] = k
+	end
+
+	return tags
+end
+
+function APslotBase:UpdateTags()
+	self.Socket:write("[{\"cmd\":\"ConnectUpdate\",\"tags\":"..ToJSON(self:GetTagList()).."}]")
+end
+
 function GMAP.NewSlot( inputTable )
 	if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then
 		print("Slot with same ID or Name already connected")
@@ -369,6 +441,7 @@ function GMAP.NewSlot( inputTable )
 			tags = {},
 			GetCBs = {},
 			ScoutCBs = {},
+			CustomTags = {},
 		}
 
 		setmetatable(newSlot, {__index = APslotBase})
@@ -403,7 +476,14 @@ function GMAP.NewSlot( inputTable )
 		newSlot.receiveAPchat = inputTable.receiveAPchat or false
 		newSlot.forwardAPchat = inputTable.forwardAPchat or false
 		newSlot.forwardGMODchat = inputTable.forwardGMODchat or false
-		newSlot.deathlink = inputTable.deathlink or false
+		local dl = inputTable.deathlink or false
+		newSlot.deathlink = dl 
+		if !isbool(dl) then
+			dl = tostring(dl)
+			newSlot.deathlinktag = dl and ("DeathLink"..dl) or "DeathLink"
+		else
+			newSlot.deathlinktag = "DeathLink"
+		end
 		newSlot.dontStore = inputTable.dontStore
 
 		GMAP.Registered[newSlot.ID] = newSlot

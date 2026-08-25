@@ -13,7 +13,8 @@ local PR = {}
 
 function PR.RoomInfo(packet,slot)
 	slot.Socket.VoluntaryDC = false
-	print("Received RoomInfo, GMOD and AP time difference: ",os.time()-packet.time)
+	--print("Received RoomInfo, GMOD and AP time difference: ",)
+	slot.timediff = os.time()-packet.time
 	packet.cmd = nil
 
 	local room = GMAP.Rooms[slot.address]
@@ -35,23 +36,12 @@ function PR.RoomInfo(packet,slot)
 
 	slot.Room = room
 
+	slot.Items = {}
+	print("running ".."AP_"..slot.ID.."_ItemListUpdate")
+	hook.Run("AP_"..slot.ID.."_ItemListUpdate")
+
 	local gamename = slot.game
-	local tags = {}
-	local tagnr = 0
-	if slot.receiveAPchat == false then
-		tagnr = tagnr + 1
-		tags[tagnr] = "NoText"
-	end
-	slot.cantSendLocations = nil
-	if slot.textOnly == true or gamename == "" then
-		tagnr = tagnr + 1
-		tags[tagnr] = "TextOnly"
-		slot.cantSendLocations = true
-	end
-	if slot.deathlink == true then
-		tagnr = tagnr + 1
-		tags[tagnr] = "DeathLink"
-	end
+	local tags = slot:GetTagList()
 
 	local requestedDPs = {}
 	local reqdpcount = 0
@@ -181,10 +171,6 @@ function PR.Connected(packet,slot)
 	slot:ConnectHandler()
 	print("running ".."AP_"..slot.ID.."_LocationListUpdate")
 	hook.Run("AP_"..slot.ID.."_LocationListUpdate")
-	slot.Items = {}
-	print("running ".."AP_"..slot.ID.."_ItemListUpdate")
-	hook.Run("AP_"..slot.ID.."_ItemListUpdate")
-	slot.Socket:write('[{"cmd":"Sync"}]')
 
 	slot.PostConnected = true
 	slot:CheckFullData()
