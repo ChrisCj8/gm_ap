@@ -358,6 +358,7 @@ end
 function APslotBase:OnConnect() end
 function APslotBase:OnFullData() end
 function APslotBase:OnDisconnect() end
+function APslotBase:OnBounce() end
 
 function GMAP.NewSlot( inputTable )
 	if GMAP.Connected[ID] != nil or GMAP.Connected[slotName] != nil then
