@@ -47,6 +47,7 @@ local SocketBase = {
 			owner.Connected = false
 			owner.FullData = false
 			owner.DPLoaded = false
+			owner.PostConnected = nil
 			for k,v in pairs(owner.GetCBs) do v() end
 			for k,v in pairs(owner.ScoutCBs) do
 				for ik,iv in ipairs(v) do iv() end
@@ -348,7 +349,7 @@ end
 function APslotBase:OnDataPackageLoad(datapackage) end
 
 function APslotBase:CheckFullData()
-	if self.DPLoaded and self.slotData and self.Locations then
+	if self.DPLoaded and self.PostConnected and self.slotData and self.Locations then
 		self.FullData = true
 		self:OnFullData()
 	end

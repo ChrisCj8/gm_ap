@@ -186,6 +186,7 @@ function PR.Connected(packet,slot)
 	hook.Run("AP_"..slot.ID.."_ItemListUpdate")
 	slot.Socket:write('[{"cmd":"Sync"}]')
 
+	slot.PostConnected = true
 	slot:CheckFullData()
 
 	local giftboxkeys = {}
