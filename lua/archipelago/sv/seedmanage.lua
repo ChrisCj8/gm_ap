@@ -18,6 +18,7 @@ function GMAP.SeedManage()
 	if cvar > 0 then
 		for k,v in pairs(GMAP.Rooms) do
 			local seed = v.seed_name
+			if !seed then continue end
 			finalreg[seed] = curtime
 			file.Write("archipelago/seedcache/"..seed..".json",util.TableToJSON({
 				SlotData = v.SlotData,

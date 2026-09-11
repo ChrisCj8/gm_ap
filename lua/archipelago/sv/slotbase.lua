@@ -16,7 +16,13 @@ function GMAP.CreateRoomTable()
 	}
 end
 
-local PR = include("archipelago/sv/packetprocessor.lua")
+local PR
+
+function GMAP.LoadPR(tbl)
+	PR = tbl
+end
+
+include("archipelago/sv/packetprocessor.lua")
 
 local SocketBase = {
 	__index = {
@@ -373,10 +379,23 @@ function APslotBase:CheckFullData()
 	end
 end
 
+function APslotBase:SendHintUpdate(slot,location,status)
+	if isstring(location) then
+		local slotinfo = self.Room.SlotInfo[slot]
+		if !slotinfo then error("SendHintUpdate could not get Slot Info for passed slot "..slot..".") end
+		location = self.Room.DataPackage.games[slotinfo.game].location_name_to_id[location]
+	end
+	self.Socket:write('[{"cmd":"UpdateHint","player":'..slot..',"location":'..location..',"status":'..status..'}]')
+end
+
 function APslotBase:OnConnect() end
 function APslotBase:OnFullData() end
 function APslotBase:OnDisconnect() end
 function APslotBase:OnBounce() end
+function APslotBase:OnLocationHintUpdate() end
+function APslotBase:OnItemHintUpdate() end
+function APslotBase:OnAnyHintUpdate() end
+function APslotBase:OnHintPointUpdate() end
 
 local function IsHandledTag(tag)
 	local lookup = {
@@ -498,6 +517,7 @@ function GMAP.NewSlot( inputTable )
 			newSlot.deathlinktag = "DeathLink"
 		end
 		newSlot.dontStore = inputTable.dontStore
+		newSlot.receiveHints = inputTable.receiveHints
 
 		GMAP.Registered[newSlot.ID] = newSlot
 

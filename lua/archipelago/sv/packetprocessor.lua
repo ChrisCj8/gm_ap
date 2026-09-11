@@ -194,6 +194,10 @@ function PR.Connected(packet,slot)
 	--slot:DataStoreSet("GiftBox;"..slot.team..";"..slot.Nr,{},true,{{operation="default",value=""}})
 	--slot:DataStoreGet(giftboxkeys)
 	--slot:DataStoreSetNotify(giftboxkeys)
+	slot.HintsByLocation, slot.HintsByItem, slot.Hints = {},{}
+	if slot.receiveHints then
+		slot:DataStoreGetNotify("_read_hints_"..team.."_"..nr)
+	end
 end
 
 ------------- ConnectionRefused
@@ -352,12 +356,60 @@ function PR.RoomUpdate(packet,slot)
 
 		slot.Room.Players = playertbl
 	end
+	if packet.hint_points then
+		local hp = packet.hint_points
+		slot.hintPoints = hp
+		slot:OnHintPointUpdate(hp)
+	end
 end
 
 --------------- Retrieved
 
 local function DSHandler(slot, key, value)
-	if string.StartsWith(key,"GiftBoxes;") then
+	if key == "_read_hints_"..slot.team.."_"..slot.Nr then
+		local sID = slot.Nr
+		local locs, items = slot.HintsByLocation, slot.HintsByItem
+		slot.Hints = value
+		for k,v in ipairs(value) do
+			v.class = nil
+			local itm, loc = sID == v.receiving_player, sID == v.finding_player
+			local anysent
+			if loc then
+				local old = locs[v.location]
+				if !old or (old.found != v.found or old.status != v.status) then
+					slot:OnAnyHintUpdate(v)
+					slot:OnLocationHintUpdate(v)
+					anysent = true
+					locs[v.location] = v
+				end
+			end
+			if itm then
+				goto main
+				::update::
+				if !anysent then slot:OnAnyHintUpdate(v) end
+				slot:OnItemHintUpdate(v)
+				goto done
+				::main::
+				local id = v.item
+				local itmtbl = items[id]
+				if !itmtbl then
+					items[id] = {[v.finding_player] = {[v.location] = v}}
+					goto update
+				end
+				local wld = itmtbl[v.finding_player]
+				if !wld then
+					itmtbl[v.finding_player] = {[v.location] = v}
+					goto update
+				end
+				local loc = wld[v.location]
+				if !loc or loc.found != v.found or loc.status != v.status then
+					wld[v.location] = v
+					goto update
+				end
+				::done::
+			end
+		end
+	elseif string.StartsWith(key,"GiftBoxes;") then
 		local teamnum = tonumber(string.sub(key,11,-1))
 		for k,v in pairs(value) do
 			local newtraits = {}
@@ -438,4 +490,5 @@ setmetatable(PR,{
 	end
 })
 
+GMAP.LoadPR(PR)
 return PR
