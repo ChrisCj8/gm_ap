@@ -235,6 +235,19 @@ function APslotBase:DataStoreSetNotify(keys)
 	self.Socket:write('[{"cmd":"SetNotify","keys":'..ToJSON(keys)..'}]')
 end
 
+function APslotBase:DataStoreGetNotify(keys)
+	local keystring
+	if istable(keys) then
+		keystring = ToJSON(keys)
+		if keystring[1] != "[" then
+			error("non-sequential table passed to DataStoreGetNotify")
+		end
+	else
+		keystring = "[\""..string.JavascriptSafe(tostring(keys)).."\"]"
+	end
+	self.Socket:write('[{"cmd":"Get","keys":'..keystring..'},{"cmd":"SetNotify","keys":'..keystring..'}]')
+end
+
 function APslotBase:SendGift(targetTeam,targetID,giftTbl)
 	local teambox = self.Room.GiftBoxes[targetTeam]
 	if !teambox then
